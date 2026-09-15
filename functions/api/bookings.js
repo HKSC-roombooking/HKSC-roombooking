@@ -1,57 +1,109 @@
-// 1. GET 請求：讀取所有預約清單
+// 通用 CORS 標頭設定，允許跨域請求與 OPTIONS 預檢
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json;charset=UTF-8"
+};
+
+export async function onRequestOptions() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
+// Cloudflare Pages Function - 讀取、新增、修改 Cloudflare D1 SQL 資料庫
 export async function onRequestGet(context) {
+  const { env } = context;
   try {
-    const { results } = await context.env.DB.prepare(
-      "SELECT * FROM bookings ORDER BY booking_date ASC, start_time ASC"
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: "Cloudflare D1 綁定變數名稱不符合 (未設定 'DB')" }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+
+    const { results } = await env.DB.prepare(
+      "SELECT id, room, category, detail, date, startTime, endTime, sessionIndex, totalSessions, status, createdAt FROM bookings ORDER BY date ASC, startTime ASC"
     ).all();
 
-    return new Response(JSON.stringify({ success: true, data: results }), {
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+    return new Response(JSON.stringify(results || []), {
+      headers: corsHeaders
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: corsHeaders
     });
   }
 }
 
-// 2. POST 請求：新增一筆預約
 export async function onRequestPost(context) {
+  const { request, env } = context;
   try {
-    const body = await context.request.json();
-    const { booking_date, room_number, category, sessions, start_time, end_time, status, notes } = body;
-
-    // 基本欄位驗證
-    if (!booking_date || !room_number || !start_time || !end_time) {
-      return new Response(JSON.stringify({ success: false, error: "請填寫所有必填欄位" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json; charset=utf-8" }
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: "Cloudflare D1 綁定變數名稱不符合 (未設定 'DB')" }), {
+        status: 500,
+        headers: corsHeaders
       });
     }
 
-    // 寫入 D1 資料庫
-    await context.env.DB.prepare(
-      `INSERT INTO bookings (booking_date, room_number, category, sessions, start_time, end_time, status, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      booking_date,
-      room_number,
-      category || '',
-      sessions || 1,
-      start_time,
-      end_time,
-      status || '待確認',
-      notes || ''
-    ).run();
+    const items = await request.json();
+    const records = Array.isArray(items) ? items : [items];
 
-    return new Response(JSON.stringify({ success: true, message: "預約成功新增！" }), {
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+    const stmt = env.DB.prepare(`
+      INSERT OR REPLACE INTO bookings (id, room, category, detail, date, startTime, endTime, sessionIndex, totalSessions, status, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const batch = records.map(b => stmt.bind(
+      b.id,
+      b.room,
+      b.category,
+      b.detail || '',
+      b.date,
+      b.startTime,
+      b.endTime,
+      b.sessionIndex || 1,
+      b.totalSessions || 1,
+      b.status || 'active',
+      b.createdAt || new Date().toISOString()
+    ));
+
+    await env.DB.batch(batch);
+    return new Response(JSON.stringify({ success: true, count: records.length }), {
+      headers: corsHeaders
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: corsHeaders
+    });
+  }
+}
+
+export async function onRequestPut(context) {
+  const { request, env } = context;
+  try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: "Cloudflare D1 綁定變數名稱不符合 (未設定 'DB')" }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+
+    const b = await request.json();
+    await env.DB.prepare(`
+      UPDATE bookings 
+      SET room = ?, category = ?, detail = ?, date = ?, startTime = ?, endTime = ?, status = ?
+      WHERE id = ?
+    `).bind(b.room, b.category, b.detail || '', b.date, b.startTime, b.endTime, b.status, b.id).run();
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: corsHeaders
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: corsHeaders
     });
   }
 }
