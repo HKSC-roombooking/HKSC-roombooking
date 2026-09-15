@@ -847,7 +847,14 @@
             cloudData.push({ id: docSnap.id, ...docSnap.data() });
           });
           if (cloudData.length > 0) {
-            bookings = cloudData;
+            // 智能合併雲端與本地資料，避免寫入中途被 Snapshot 覆蓋沖掉
+            const cloudMap = new Map(cloudData.map(item => [item.id, item]));
+            bookings.forEach(b => {
+              if (!cloudMap.has(b.id)) {
+                cloudMap.set(b.id, b);
+              }
+            });
+            bookings = Array.from(cloudMap.values());
             saveLocalBookings();
             renderCalendar();
           }
@@ -907,12 +914,15 @@
 
     function getMatchingDates(startDate, endDate, selectedWeekdays) {
       const dates = [];
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const curr = new Date(start);
+      // 拆解年月日，避免 UTC 時區轉換造成的日期偏移問題
+      const [sY, sM, sD] = startDate.split('-').map(Number);
+      const [eY, eM, eD] = endDate.split('-').map(Number);
+
+      let curr = new Date(sY, sM - 1, sD);
+      const end = new Date(eY, eM - 1, eD);
 
       while (curr <= end) {
-        const dayOfWeek = curr.getDay();
+        const dayOfWeek = curr.getDay(); // 0 = 日, 1 = 一, ...
         if (selectedWeekdays.includes(dayOfWeek)) {
           const yyyy = curr.getFullYear();
           const mm = (curr.getMonth() + 1).toString().padStart(2, '0');
@@ -1001,7 +1011,7 @@
 
       for (let i = 0; i < totalSessions; i++) {
         const bookingObj = {
-          id: 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          id: 'b_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5),
           room,
           category,
           detail,
@@ -1019,11 +1029,12 @@
       bookings.push(...newBookings);
       saveLocalBookings();
 
+      // 改用 Promise.all 並行批量寫入，避免單筆寫入觸發 Snapshot 覆蓋
       if (db) {
         try {
-          for (const item of newBookings) {
-            await setDoc(doc(db, 'artifacts', appId, 'public_data', item.id), item);
-          }
+          await Promise.all(newBookings.map(item => 
+            setDoc(doc(db, 'artifacts', appId, 'public_data', item.id), item)
+          ));
         } catch (err) {
           console.error("Cloud save error:", err);
         }
