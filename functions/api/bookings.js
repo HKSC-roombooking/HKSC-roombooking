@@ -1,16 +1,18 @@
-// 通用 CORS 標頭設定，允許跨域請求與 OPTIONS 預檢
+// 通用 CORS 與 禁用快取 標頭設定
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
-  "Content-Type": "application/json;charset=UTF-8"
+  "Content-Type": "application/json;charset=UTF-8",
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+  "Pragma": "no-cache"
 };
 
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: corsHeaders });
 }
 
-// Cloudflare Pages Function - 讀取、新增、修改 Cloudflare D1 SQL 資料庫
+// Cloudflare Pages Function - 讀取 Cloudflare D1 SQL 資料庫
 export async function onRequestGet(context) {
   const { env } = context;
   try {
@@ -36,6 +38,7 @@ export async function onRequestGet(context) {
   }
 }
 
+// 新增預約記錄
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
@@ -80,6 +83,7 @@ export async function onRequestPost(context) {
   }
 }
 
+// 修改 / 取消預約記錄
 export async function onRequestPut(context) {
   const { request, env } = context;
   try {
