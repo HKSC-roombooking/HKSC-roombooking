@@ -61,19 +61,19 @@
       <!-- Action Status & Tools -->
       <div class="flex items-center gap-2 sm:gap-3">
         <!-- Cloud Sync Status Badge -->
-        <div id="cloudStatusBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <div id="cloudStatusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="cloudStatusText">雲端同步中</span>
+          <span id="cloudStatusText">Cloudflare D1 雲端同步中</span>
         </div>
 
         <!-- Export CSV Button (Triggers Filter Modal) -->
-        <button onclick="window.openExportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs">
+        <button onclick="window.openExportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer">
           <i data-lucide="download" class="w-3.5 h-3.5"></i>
           <span>匯出 CSV</span>
         </button>
 
         <!-- Lock / Unlock Button -->
-        <button id="lockToggleBtn" onclick="window.toggleLockModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-300">
+        <button id="lockToggleBtn" onclick="window.toggleLockModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-300 cursor-pointer">
           <i id="lockIcon" data-lucide="lock" class="w-3.5 h-3.5 text-slate-500"></i>
           <span id="lockStatusText">通行密碼</span>
         </button>
@@ -109,7 +109,7 @@
               <select id="roomSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-bold">
                 <option value="Rm 21">Rm 21</option>
                 <option value="Rm 22">Rm 22</option>
-                <option value="Rm 23">Rm 23</option>
+                <option value="Rm 23">Rm 23 (可重疊)</option>
                 <option value="Rm 31">Rm 31</option>
                 <option value="Rm 32">Rm 32</option>
                 <option value="Rm 41">Rm 41</option>
@@ -186,18 +186,18 @@
             <!-- 5. Time Selectors -->
             <div class="lg:col-span-2">
               <label class="block text-xs font-semibold text-slate-700 mb-1">開始時間 *</label>
-              <select id="startTimeSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+              <select id="startTimeSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium">
               </select>
             </div>
             <div class="lg:col-span-2">
               <label class="block text-xs font-semibold text-slate-700 mb-1">結束時間 *</label>
-              <select id="endTimeSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+              <select id="endTimeSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium">
               </select>
             </div>
 
             <!-- Submit Button -->
             <div class="lg:col-span-3">
-              <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 text-xs h-[38px]">
+              <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 text-xs h-[38px] cursor-pointer">
                 <i data-lucide="check-circle" class="w-4 h-4"></i>
                 <span>確定提交預約</span>
               </button>
@@ -218,10 +218,10 @@
         
         <!-- View Mode Tabs -->
         <div class="inline-flex p-1 bg-slate-100 rounded-xl">
-          <button id="tabSingle" onclick="window.switchTab('single')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs">
+          <button id="tabSingle" onclick="window.switchTab('single')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs cursor-pointer">
             單一房間月曆
           </button>
-          <button id="tabAll" onclick="window.switchTab('all')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <button id="tabAll" onclick="window.switchTab('all')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 cursor-pointer">
             全房間總覽
           </button>
         </div>
@@ -232,7 +232,7 @@
           <!-- Single Room Filter Dropdown -->
           <div id="singleRoomFilterContainer" class="flex items-center gap-1.5">
             <span class="text-xs font-medium text-slate-500">房間:</span>
-            <select id="filterRoomSelect" onchange="window.onFilterChange()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select id="filterRoomSelect" onchange="window.onFilterChange()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
               <option value="Rm 21">Rm 21</option>
               <option value="Rm 22">Rm 22</option>
               <option value="Rm 23">Rm 23</option>
@@ -245,11 +245,11 @@
 
           <!-- Month & Year Selector -->
           <div class="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1">
-            <button onclick="window.changeMonth(-1)" class="p-1 hover:bg-slate-200 rounded text-slate-600">
+            <button onclick="window.changeMonth(-1)" class="p-1 hover:bg-slate-200 rounded text-slate-600 cursor-pointer">
               <i data-lucide="chevron-left" class="w-4 h-4"></i>
             </button>
             <input type="month" id="monthPicker" onchange="window.onFilterChange()" class="bg-transparent border-0 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-            <button onclick="window.changeMonth(1)" class="p-1 hover:bg-slate-200 rounded text-slate-600">
+            <button onclick="window.changeMonth(1)" class="p-1 hover:bg-slate-200 rounded text-slate-600 cursor-pointer">
               <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
           </div>
@@ -268,7 +268,7 @@
           <span class="inline-flex items-center gap-1 text-amber-700 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> JV (橙)</span>
         </div>
         <div class="text-[11px] text-slate-400 font-normal">
-          * Rm 23 允許重疊預約
+          * Rm 23 允許重疊預約；其餘房間嚴格防撞期
         </div>
       </div>
 
@@ -317,7 +317,7 @@
           <i data-lucide="shield-lock" class="w-5 h-5 text-blue-600"></i>
           請輸入系統通行密碼
         </h3>
-        <button id="modalCloseBtn" onclick="window.closePasscodeModal()" class="text-slate-400 hover:text-slate-600 hidden">
+        <button id="modalCloseBtn" onclick="window.closePasscodeModal()" class="text-slate-400 hover:text-slate-600 hidden cursor-pointer">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -326,11 +326,11 @@
         <p class="text-xs text-slate-500">本系統僅限授權人員使用，請輸入密碼以進入預約版面：</p>
         <label class="block text-xs font-semibold text-slate-700">管理者密碼</label>
         <input type="password" id="passcodeInput" placeholder="請輸入通行密碼" onkeydown="if(event.key==='Enter') window.verifyPasscode()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <p id="passcodeError" class="text-xs text-red-500 hidden font-medium">密碼錯誤，請重新輸入！</p>
+        <p id="passcodeError" class="text-xs text-red-500 hidden font-medium">密碼錯誤，請重新輸入！(提示: Hksc1959!)</p>
       </div>
 
       <div class="pt-2">
-        <button onclick="window.verifyPasscode()" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all">
+        <button onclick="window.verifyPasscode()" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all cursor-pointer">
           確認解鎖並進入
         </button>
       </div>
@@ -345,7 +345,7 @@
           <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
           預約記錄異動 / 取消
         </h3>
-        <button onclick="window.closeCancelRescheduleModal()" class="text-slate-400 hover:text-slate-600">
+        <button onclick="window.closeCancelRescheduleModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -387,7 +387,7 @@
             <select id="rescheduleEndTime" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:ring-1 focus:ring-blue-500"></select>
           </div>
         </div>
-        <button onclick="window.rescheduleBooking()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs">
+        <button onclick="window.rescheduleBooking()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs cursor-pointer">
           確認變更預約
         </button>
       </div>
@@ -398,7 +398,7 @@
           <i data-lucide="minus-circle" class="w-4 h-4"></i>
           選項 B：確定取消預約（記錄將保留並加上刪除線）
         </div>
-        <button onclick="window.confirmCancelBooking()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs">
+        <button onclick="window.confirmCancelBooking()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs cursor-pointer">
           確定取消預約
         </button>
       </div>
@@ -413,7 +413,7 @@
           <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
           預約時段衝突警告
         </h3>
-        <button onclick="window.closeConflictModal()" class="text-slate-400 hover:text-slate-600">
+        <button onclick="window.closeConflictModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -427,7 +427,7 @@
       </div>
 
       <div class="pt-2">
-        <button onclick="window.closeConflictModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs">
+        <button onclick="window.closeConflictModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs cursor-pointer">
           返回修改
         </button>
       </div>
@@ -442,7 +442,7 @@
           <i data-lucide="download" class="w-5 h-5 text-emerald-600"></i>
           匯出 CSV 預約記錄
         </h3>
-        <button onclick="window.closeExportModal()" class="text-slate-400 hover:text-slate-600">
+        <button onclick="window.closeExportModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -481,10 +481,10 @@
       </div>
 
       <div class="grid grid-cols-2 gap-2 pt-2">
-        <button onclick="window.closeExportModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
+        <button onclick="window.closeExportModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs cursor-pointer">
           取消
         </button>
-        <button onclick="window.confirmExportCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md shadow-emerald-600/20">
+        <button onclick="window.confirmExportCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md shadow-emerald-600/20 cursor-pointer">
           確認下載 CSV
         </button>
       </div>
@@ -494,12 +494,8 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
-  <!-- Firebase SDK Imports & Application Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Global App State Variables
+  <!-- Cloudflare D1 REST API & Application Logic -->
+  <script>
     let bookings = [];
     let activeTab = 'single'; // 'single' or 'all'
     let selectedYear = 2026;
@@ -508,26 +504,8 @@
     let targetBookingId = null;
     let isUnlocked = false;
 
-    // Firebase Credentials Setup
-    const appId = typeof __app_id !== 'undefined' ? __app_id : '7-rooms-booking-app';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config
-      ? JSON.parse(__firebase_config)
-      : {
-          apiKey: "demo-api-key",
-          authDomain: "demo-app.firebaseapp.com",
-          projectId: "demo-app",
-          storageBucket: "demo-app.appspot.com",
-          messagingSenderId: "123456789",
-          appId: "1:123456789:web:123456"
-        };
-
-    let db = null;
-    try {
-      const app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-    } catch (e) {
-      console.warn("Firebase initialization skipped or in offline demo mode:", e);
-    }
+    // Cloudflare Pages Function API Endpoint
+    const API_URL = '/api/bookings';
 
     window.addEventListener('DOMContentLoaded', () => {
       populateTimeSelects();
@@ -545,221 +523,121 @@
       document.getElementById('startDateInput').value = `${selectedYear}-${formattedMonth}-01`;
       document.getElementById('endDateInput').value = `${selectedYear}-${formattedMonth}-15`;
 
-      // Always show strict lock overlay on load until valid password is entry
+      // Always show strict lock overlay on load until valid passcode entry
       lockUI();
 
+      // 從 本地快取與 Cloudflare D1 獲取資料
       loadLocalBookings();
-      setupCloudSync();
+      fetchBookingsFromD1();
+
+      // 每 5 秒自動與 D1 輪詢同步（跨裝置實時刷新）
+      setInterval(fetchBookingsFromD1, 5000);
+      window.addEventListener('focus', fetchBookingsFromD1);
+
       renderCalendar();
       lucide.createIcons();
     });
 
-    function lockUI() {
+    window.lockUI = function() {
       isUnlocked = false;
+      const modal = document.getElementById('passcodeModal');
       const wrapper = document.getElementById('appContentWrapper');
-      if (wrapper) {
-        wrapper.classList.add('blur-md', 'pointer-events-none', 'select-none');
-      }
-      const closeBtn = document.getElementById('modalCloseBtn');
-      if (closeBtn) closeBtn.classList.add('hidden');
+      const statusText = document.getElementById('lockStatusText');
+      const lockIcon = document.getElementById('lockIcon');
 
-      document.getElementById('passcodeModal').classList.remove('hidden');
-      updateLockUI();
-    }
+      if (modal) modal.classList.remove('hidden');
+      if (wrapper) wrapper.classList.add('blur-md', 'pointer-events-none', 'select-none');
+      if (statusText) statusText.textContent = '通行密碼';
+      if (lockIcon) lockIcon.setAttribute('data-lucide', 'lock');
+      lucide.createIcons();
+    };
 
-    function unlockUI() {
+    window.unlockUI = function() {
       isUnlocked = true;
+      const modal = document.getElementById('passcodeModal');
       const wrapper = document.getElementById('appContentWrapper');
-      if (wrapper) {
-        wrapper.classList.remove('blur-md', 'pointer-events-none', 'select-none');
-      }
-      document.getElementById('passcodeModal').classList.add('hidden');
-      updateLockUI();
-    }
+      const statusText = document.getElementById('lockStatusText');
+      const lockIcon = document.getElementById('lockIcon');
+      const closeBtn = document.getElementById('modalCloseBtn');
+
+      if (modal) modal.classList.add('hidden');
+      if (wrapper) wrapper.classList.remove('blur-md', 'pointer-events-none', 'select-none');
+      if (statusText) statusText.textContent = '已通行解鎖';
+      if (lockIcon) lockIcon.setAttribute('data-lucide', 'unlock');
+      if (closeBtn) closeBtn.classList.remove('hidden');
+      lucide.createIcons();
+    };
 
     window.verifyPasscode = function() {
-      const input = document.getElementById('passcodeInput').value;
-      if (input === 'Hksc1959!') {
-        document.getElementById('passcodeError').classList.add('hidden');
-        document.getElementById('passcodeInput').value = '';
+      const input = document.getElementById('passcodeInput');
+      const errorMsg = document.getElementById('passcodeError');
+      if (!input) return;
+      
+      const val = input.value.trim();
+      if (val === 'Hksc1959!') {
+        if (errorMsg) errorMsg.classList.add('hidden');
+        input.value = '';
         unlockUI();
-        showToast("解鎖成功！歡迎使用預約系統", "success");
+        showToast("解鎖成功！歡迎使用 HKSC 課室預約管理系統", "success");
       } else {
-        document.getElementById('passcodeError').classList.remove('hidden');
+        if (errorMsg) errorMsg.classList.remove('hidden');
+        input.select();
+      }
+    };
+
+    window.toggleLockModal = function() {
+      if (!isUnlocked) {
+        lockUI();
+      } else {
+        const modal = document.getElementById('passcodeModal');
+        if (modal) modal.classList.toggle('hidden');
       }
     };
 
     window.closePasscodeModal = function() {
-      if (!isUnlocked) return; // Strict lock: disallow closing if not unlocked
-      document.getElementById('passcodeModal').classList.add('hidden');
-      document.getElementById('passcodeError').classList.add('hidden');
-      document.getElementById('passcodeInput').value = '';
-    };
-
-    window.toggleLockModal = function() {
       if (isUnlocked) {
-        if (confirm("確定要手動鎖定系統嗎？")) {
-          lockUI();
-          showToast("已手動鎖定系統", "info");
-        }
-      } else {
-        document.getElementById('passcodeModal').classList.remove('hidden');
+        const modal = document.getElementById('passcodeModal');
+        if (modal) modal.classList.add('hidden');
       }
     };
 
-    function updateLockUI() {
-      const lockBtn = document.getElementById('lockToggleBtn');
-      const lockIcon = document.getElementById('lockIcon');
-      const lockStatusText = document.getElementById('lockStatusText');
-      const closeBtn = document.getElementById('modalCloseBtn');
+    function populateTimeSelects() {
+      const startSel = document.getElementById('startTimeSelect');
+      const endSel = document.getElementById('endTimeSelect');
+      if (!startSel || !endSel) return;
 
-      if (isUnlocked) {
-        if (lockBtn) lockBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition-all";
-        if (lockStatusText) lockStatusText.textContent = "已授權解鎖 (點擊鎖定)";
-        if (lockIcon) lockIcon.setAttribute('data-lucide', 'unlock');
-        if (closeBtn) closeBtn.classList.remove('hidden');
-      } else {
-        if (lockBtn) lockBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300";
-        if (lockStatusText) lockStatusText.textContent = "系統已鎖定";
-        if (lockIcon) lockIcon.setAttribute('data-lucide', 'lock');
-        if (closeBtn) closeBtn.classList.add('hidden');
+      startSel.innerHTML = '';
+      endSel.innerHTML = '';
+
+      for (let h = 8; h <= 23; h++) {
+        for (let m of [0, 30]) {
+          if (h === 23 && m === 30) continue;
+          const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+          startSel.add(new Option(timeStr, timeStr));
+          endSel.add(new Option(timeStr, timeStr));
+        }
       }
-      lucide.createIcons();
+      // Set default
+      startSel.value = '09:00';
+      endSel.value = '11:00';
     }
 
-    function renderCalendar() {
-      const calendarGrid = document.getElementById('calendarGrid');
-      if (!calendarGrid) return;
-      calendarGrid.innerHTML = '';
+    function populateRescheduleTimeSelects() {
+      const startSel = document.getElementById('rescheduleStartTime');
+      const endSel = document.getElementById('rescheduleEndTime');
+      if (!startSel || !endSel) return;
 
-      const titleMonth = (selectedMonth + 1).toString().padStart(2, '0');
-      const roomTitleStr = activeTab === 'single' ? `[${selectedFilterRoom}] ` : '[全房間總覽] ';
-      document.getElementById('calendarTitle').innerHTML = `
-        <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
-        ${selectedYear} 年 ${titleMonth} 月 ${roomTitleStr}預約狀況
-      `;
+      startSel.innerHTML = '';
+      endSel.innerHTML = '';
 
-      const currentMonthPrefix = `${selectedYear}-${titleMonth}`;
-      let filtered = bookings.filter(b => b.date && b.date.startsWith(currentMonthPrefix));
-
-      if (activeTab === 'single') {
-        filtered = filtered.filter(b => b.room === selectedFilterRoom);
-      }
-
-      document.getElementById('bookingCountBadge').textContent = `共 ${filtered.length} 筆記錄`;
-
-      const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1);
-      const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-
-      let startDayIndex = firstDayOfMonth.getDay() - 1;
-      if (startDayIndex === -1) startDayIndex = 6;
-
-      for (let i = 0; i < startDayIndex; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'bg-slate-50/50 min-h-[170px] p-1.5 border-b border-r border-slate-100 opacity-40';
-        calendarGrid.appendChild(emptyCell);
-      }
-
-      const NIGHT_START_MINUTES = 19 * 60; // 19:00 (7:00 PM)
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dayStr = day.toString().padStart(2, '0');
-        const fullDateStr = `${currentMonthPrefix}-${dayStr}`;
-
-        const dayBookings = filtered.filter(b => b.date === fullDateStr);
-
-        dayBookings.sort((a, b) => {
-          if (activeTab === 'all' && a.room !== b.room) {
-            return a.room.localeCompare(b.room);
-          }
-          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
-        });
-
-        // Split into 2 Tiers: Day (08:00 - 18:30) & Night (19:00 - 23:00)
-        const dayTierBookings = dayBookings.filter(b => timeToMinutes(b.startTime) < NIGHT_START_MINUTES);
-        const nightTierBookings = dayBookings.filter(b => timeToMinutes(b.startTime) >= NIGHT_START_MINUTES);
-
-        const cell = document.createElement('div');
-        cell.className = 'bg-white min-h-[180px] p-1.5 border-b border-r border-slate-200 flex flex-col justify-between hover:bg-slate-50/50 transition-all';
-
-        const dateHeader = document.createElement('div');
-        dateHeader.className = 'flex items-center justify-between mb-1 border-b pb-0.5';
-        
-        const isToday = isCurrentToday(selectedYear, selectedMonth, day);
-        dateHeader.innerHTML = `
-          <span class="text-xs font-bold ${isToday ? 'w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center' : 'text-slate-700'}">
-            ${day}
-          </span>
-          ${dayBookings.length > 0 ? `<span class="text-[10px] font-semibold text-slate-400">${dayBookings.length}項</span>` : ''}
-        `;
-
-        const tiersContainer = document.createElement('div');
-        tiersContainer.className = 'flex-1 space-y-1.5 overflow-y-auto max-h-[220px]';
-
-        // TIER 1: Day Tier (8am - 6:30pm)
-        if (dayTierBookings.length > 0) {
-          const dayTierDiv = document.createElement('div');
-          dayTierDiv.className = 'space-y-1';
-          dayTierDiv.innerHTML = `<div class="text-[9px] font-bold text-amber-700 bg-amber-50/80 px-1 py-0.5 rounded flex items-center justify-between"><span>☀️ 日間 (08:00-18:30)</span><span class="text-[8px] opacity-75">${dayTierBookings.length}</span></div>`;
-
-          dayTierBookings.forEach(booking => {
-            dayTierDiv.appendChild(createBookingCardElement(booking));
-          });
-          tiersContainer.appendChild(dayTierDiv);
+      for (let h = 8; h <= 23; h++) {
+        for (let m of [0, 30]) {
+          if (h === 23 && m === 30) continue;
+          const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+          startSel.add(new Option(timeStr, timeStr));
+          endSel.add(new Option(timeStr, timeStr));
         }
-
-        // TIER 2: Night Tier (7pm - 11pm)
-        if (nightTierBookings.length > 0) {
-          const nightTierDiv = document.createElement('div');
-          nightTierDiv.className = 'space-y-1';
-          nightTierDiv.innerHTML = `<div class="text-[9px] font-bold text-indigo-700 bg-indigo-50/80 px-1 py-0.5 rounded flex items-center justify-between"><span>🌙 夜間 (19:00-23:00)</span><span class="text-[8px] opacity-75">${nightTierBookings.length}</span></div>`;
-
-          nightTierBookings.forEach(booking => {
-            nightTierDiv.appendChild(createBookingCardElement(booking));
-          });
-          tiersContainer.appendChild(nightTierDiv);
-        }
-
-        cell.appendChild(dateHeader);
-        cell.appendChild(tiersContainer);
-        calendarGrid.appendChild(cell);
       }
-
-      lucide.createIcons();
-    }
-
-    function createBookingCardElement(booking) {
-      const card = document.createElement('div');
-      const isCancelled = booking.status === 'cancelled';
-
-      let colorStyle = 'bg-slate-100 text-slate-900 border-slate-300';
-      if (booking.category === '考試') colorStyle = 'bg-blue-50 text-blue-900 border-blue-200';
-      if (booking.category === '租房') colorStyle = 'bg-emerald-50 text-emerald-900 border-emerald-200';
-      if (booking.category === 'JV') colorStyle = 'bg-amber-50 text-amber-900 border-amber-200';
-
-      if (isCancelled) {
-        colorStyle = 'bg-slate-100 text-slate-400 border-slate-200 line-through opacity-70';
-      }
-
-      card.className = `p-1 rounded border text-[10px] leading-tight font-medium relative group transition-all shadow-2xs ${colorStyle}`;
-
-      const roomPrefix = activeTab === 'all' ? `<span class="font-extrabold mr-0.5 text-blue-700">[${booking.room}]</span>` : '';
-      const sessionText = (booking.sessionIndex && booking.totalSessions) ? `<span class="text-[8px] sm:text-[9px] font-bold text-blue-600 no-underline bg-white px-1 rounded border border-blue-200 inline-block ml-0.5">${booking.sessionIndex}/${booking.totalSessions}堂</span>` : '';
-      const detailText = booking.detail ? `：${booking.detail}` : '';
-      const cancelledBadge = isCancelled ? `<span class="inline-block bg-red-100 text-red-600 text-[8px] px-1 rounded no-underline font-bold ml-1">已取消</span>` : '';
-
-      card.innerHTML = `
-        <div class="flex items-start justify-between gap-0.5">
-          <div class="flex-1 min-w-0 break-words leading-tight">
-            ${roomPrefix}<span class="font-bold text-[10px] sm:text-[11px]">${booking.startTime}-${booking.endTime}</span>${sessionText}${cancelledBadge}
-            <div class="text-[9px] sm:text-[10px] font-medium text-slate-700 mt-0.5 break-words">${booking.category}${detailText}</div>
-          </div>
-          <button onclick="window.openCancelModal('${booking.id}')" title="異動/取消" class="text-slate-400 hover:text-blue-600 p-0.5 rounded shrink-0 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity no-underline">
-            <i data-lucide="edit-2" class="w-3 h-3"></i>
-          </button>
-        </div>
-      `;
-      return card;
     }
 
     function timeToMinutes(timeStr) {
@@ -768,114 +646,40 @@
       return h * 60 + m;
     }
 
-    function isCurrentToday(y, m, d) {
-      const today = new Date();
-      return today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
-    }
-
-    function populateTimeSelects() {
-      const startSelect = document.getElementById('startTimeSelect');
-      const endSelect = document.getElementById('endTimeSelect');
-      if (!startSelect || !endSelect) return;
-      startSelect.innerHTML = '';
-      endSelect.innerHTML = '';
-
-      const times = [];
-      for (let h = 8; h <= 23; h++) {
-        const hh = h.toString().padStart(2, '0');
-        times.push(`${hh}:00`);
-        if (h !== 23) times.push(`${hh}:30`);
-      }
-
-      times.forEach(t => {
-        startSelect.add(new Option(t, t));
-        endSelect.add(new Option(t, t));
-      });
-
-      startSelect.value = "09:00";
-      endSelect.value = "11:00";
-    }
-
-    function populateRescheduleTimeSelects() {
-      const startSelect = document.getElementById('rescheduleStartTime');
-      const endSelect = document.getElementById('rescheduleEndTime');
-      if (!startSelect || !endSelect) return;
-      startSelect.innerHTML = '';
-      endSelect.innerHTML = '';
-
-      const times = [];
-      for (let h = 8; h <= 23; h++) {
-        const hh = h.toString().padStart(2, '0');
-        times.push(`${hh}:00`);
-        if (h !== 23) times.push(`${hh}:30`);
-      }
-
-      times.forEach(t => {
-        startSelect.add(new Option(t, t));
-        endSelect.add(new Option(t, t));
-      });
-    }
-
-    async function loadLocalBookings() {
-    try {
-        const res = await fetch('/api/bookings');
-        const result = await res.json();
-        if (result.success && result.data) {
-            bookings = result.data.map(item => ({
-                id: item.id,
-                date: item.booking_date,
-                room: item.room_number,
-                category: item.category,
-                startTime: item.start_time,
-                endTime: item.end_time,
-                notes: item.notes,
-                cancelled: item.status === '已取消'
-            }));
-            renderCalendar();
+    async function fetchBookingsFromD1() {
+      const badgeText = document.getElementById('cloudStatusText');
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('D1 fetch error');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          bookings = data;
+          saveLocalBookings();
+          renderCalendar();
+          if (badgeText) badgeText.textContent = "Cloudflare D1 雲端已同步";
         }
-    } catch (e) {
-        console.error("Load API error:", e);
-    }
-}
-
-    async function saveLocalBookings(newBooking) {
-    try {
-        if (!newBooking) return;
-        const res = await fetch('/api/bookings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                booking_date: newBooking.date,
-                room_number: newBooking.room,
-                category: newBooking.category,
-                start_time: newBooking.startTime,
-                end_time: newBooking.endTime,
-                notes: newBooking.notes,
-                status: '已確認'
-            })
-        });
-        const result = await res.json();
-        if (result.success) {
-            await loadLocalBookings(); // 新增完成後重新從遠端載入最新清單
-        }
-    } catch (e) {
-        console.error("Save API error:", e);
-    }
-}
-
-   
-            });
-            bookings = Array.from(cloudMap.values());
-            saveLocalBookings();
-            renderCalendar();
-          }
-          if (badgeText) badgeText.textContent = "雲端即時同步中";
-        }, (err) => {
-          console.warn("Firestore sync warning:", err);
-          if (badgeText) badgeText.textContent = "離線備份模式";
-        });
       } catch (err) {
-        console.warn("Cloud sync setup failed:", err);
+        console.warn("D1 API Sync warning:", err);
+        if (badgeText) badgeText.textContent = "本地快取模式";
+      }
+    }
+
+    function saveLocalBookings() {
+      try {
+        localStorage.setItem('hksc_bookings', JSON.stringify(bookings));
+      } catch (e) {
+        console.error("Local storage save error:", e);
+      }
+    }
+
+    function loadLocalBookings() {
+      try {
+        const saved = localStorage.getItem('hksc_bookings');
+        if (saved) {
+          bookings = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error("Local storage load error:", e);
       }
     }
 
@@ -886,12 +690,12 @@
       const roomContainer = document.getElementById('singleRoomFilterContainer');
 
       if (tab === 'single') {
-        btnSingle.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs";
-        btnAll.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        btnSingle.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs cursor-pointer";
+        btnAll.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 cursor-pointer";
         if (roomContainer) roomContainer.classList.remove('hidden');
       } else {
-        btnAll.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs";
-        btnSingle.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        btnAll.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs cursor-pointer";
+        btnSingle.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 cursor-pointer";
         if (roomContainer) roomContainer.classList.add('hidden');
       }
       renderCalendar();
@@ -925,7 +729,6 @@
 
     function getMatchingDates(startDate, endDate, selectedWeekdays) {
       const dates = [];
-      // 拆解年月日，避免 UTC 時區轉換造成的日期偏移問題
       const [sY, sM, sD] = startDate.split('-').map(Number);
       const [eY, eM, eD] = endDate.split('-').map(Number);
 
@@ -933,7 +736,7 @@
       const end = new Date(eY, eM - 1, eD);
 
       while (curr <= end) {
-        const dayOfWeek = curr.getDay(); // 0 = 日, 1 = 一, ...
+        const dayOfWeek = curr.getDay(); // 0 = Sunday, 1 = Monday, ...
         if (selectedWeekdays.includes(dayOfWeek)) {
           const yyyy = curr.getFullYear();
           const mm = (curr.getMonth() + 1).toString().padStart(2, '0');
@@ -946,7 +749,7 @@
     }
 
     function checkConflict(room, date, startTime, endTime, excludeBookingId = null) {
-      if (room === 'Rm 23') return false; // Rm 23 allows overlapping
+      if (room === 'Rm 23') return false; // Rm 23 allows overlapping bookings
 
       const newStart = timeToMinutes(startTime);
       const newEnd = timeToMinutes(endTime);
@@ -1009,7 +812,7 @@
       if (conflicts.length > 0) {
         const conflictList = document.getElementById('conflictList');
         conflictList.innerHTML = conflicts.map(c => `
-          <div class="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+          <div class="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 font-medium">
             <strong>${c.date}</strong> [${c.room}] ${c.startTime} - ${c.endTime} 時段已被預約
           </div>
         `).join('');
@@ -1037,22 +840,30 @@
         newBookings.push(bookingObj);
       }
 
+      // Save locally first for instant UI response
       bookings.push(...newBookings);
       saveLocalBookings();
+      renderCalendar();
 
-      // 改用 Promise.all 並行批量寫入，避免單筆寫入觸發 Snapshot 覆蓋
-      if (db) {
-        try {
-          await Promise.all(newBookings.map(item => 
-            setDoc(doc(db, 'artifacts', appId, 'public_data', item.id), item)
-          ));
-        } catch (err) {
-          console.error("Cloud save error:", err);
+      // Post to Cloudflare Pages Function (D1 Database)
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newBookings)
+        });
+
+        if (res.ok) {
+          showToast(`成功新增 ${newBookings.length} 筆預約並同步至 D1！`, "success");
+          fetchBookingsFromD1();
+        } else {
+          showToast("已存至本地！D1 連線失敗，請檢查設定", "info");
         }
+      } catch (err) {
+        console.error("D1 Write Error:", err);
+        showToast("已存至本地備份", "info");
       }
 
-      renderCalendar();
-      showToast(`成功新增 ${newBookings.length} 筆預約記錄！`, "success");
       document.getElementById('detailInput').value = '';
     };
 
@@ -1071,6 +882,7 @@
         <div><strong>日期：</strong> ${booking.date}</div>
         <div><strong>時段：</strong> ${booking.startTime} - ${booking.endTime}</div>
         <div><strong>分類/備註：</strong> ${booking.category} ${booking.detail ? `(${booking.detail})` : ''}</div>
+        <div><strong>堂數標籤：</strong> ${booking.sessionIndex || 1}/${booking.totalSessions || 1} 堂</div>
         <div><strong>狀態：</strong> ${booking.status === 'cancelled' ? '已取消' : '有效預約'}</div>
       `;
 
@@ -1114,18 +926,23 @@
       booking.status = 'active';
 
       saveLocalBookings();
+      renderCalendar();
 
-      if (db) {
-        try {
-          await setDoc(doc(db, 'artifacts', appId, 'public_data', booking.id), booking);
-        } catch (err) {
-          console.error("Cloud update error:", err);
+      try {
+        const res = await fetch(API_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(booking)
+        });
+        if (res.ok) {
+          showToast("成功更新預約記錄至 D1！", "success");
+          fetchBookingsFromD1();
         }
+      } catch (err) {
+        console.error("D1 Update Error:", err);
       }
 
       window.closeCancelRescheduleModal();
-      renderCalendar();
-      showToast("成功更新預約記錄！", "success");
     };
 
     window.confirmCancelBooking = async function() {
@@ -1135,18 +952,23 @@
 
       booking.status = 'cancelled';
       saveLocalBookings();
+      renderCalendar();
 
-      if (db) {
-        try {
-          await setDoc(doc(db, 'artifacts', appId, 'public_data', booking.id), booking);
-        } catch (err) {
-          console.error("Cloud status update error:", err);
+      try {
+        const res = await fetch(API_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(booking)
+        });
+        if (res.ok) {
+          showToast("已取消該預約（記錄保留並更新至 D1）", "info");
+          fetchBookingsFromD1();
         }
+      } catch (err) {
+        console.error("D1 Cancel Status Error:", err);
       }
 
       window.closeCancelRescheduleModal();
-      renderCalendar();
-      showToast("已成功取消該預約（記錄保留並加上刪除線）", "info");
     };
 
     window.closeConflictModal = function() {
@@ -1211,7 +1033,7 @@
         return a.room.localeCompare(b.room);
       });
 
-      let csvStr = "\uFEFF";
+      let csvStr = "\uFEFF"; // UTF-8 BOM for Excel
       csvStr += "日期,房間號碼,分類,堂數,開始時間,結束時間,狀態,詳細備註\n";
 
       filtered.forEach(b => {
@@ -1234,7 +1056,153 @@
       showToast(`已成功匯出 ${filtered.length} 筆預約記錄！`, "success");
     };
 
-    // UI Toast Helper
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const title = document.getElementById('calendarTitle');
+      const badge = document.getElementById('bookingCountBadge');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+
+      const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+      if (title) {
+        const viewText = activeTab === 'single' ? `[${selectedFilterRoom}]` : '[全房間總覽]';
+        title.innerHTML = `<i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i> ${selectedYear}年 ${monthNames[selectedMonth]} 月曆檢視 <span class="text-xs text-blue-600 font-semibold">${viewText}</span>`;
+      }
+
+      const firstDay = new Date(selectedYear, selectedMonth, 1);
+      const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+      const daysInMonth = lastDay.getDate();
+
+      // Get starting day index (0 = Mon, 6 = Sun)
+      let startDayOfWeek = firstDay.getDay() - 1;
+      if (startDayOfWeek === -1) startDayOfWeek = 6;
+
+      // Render padding empty days
+      for (let i = 0; i < startDayOfWeek; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = "bg-slate-50/50 min-h-[110px] p-1 text-slate-300";
+        grid.appendChild(emptyCell);
+      }
+
+      let totalMonthBookingsCount = 0;
+
+      // Render month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const monthStr = (selectedMonth + 1).toString().padStart(2, '0');
+        const dayStr = day.toString().padStart(2, '0');
+        const dateKey = `${selectedYear}-${monthStr}-${dayStr}`;
+
+        const dayCell = document.createElement('div');
+        dayCell.className = "bg-white min-h-[120px] p-1.5 border-t border-slate-100 flex flex-col justify-start gap-1 overflow-hidden";
+
+        // Day Number Header
+        const dayHeader = document.createElement('div');
+        dayHeader.className = "text-xs font-bold text-slate-700 flex justify-between items-center px-1 border-b border-slate-50 pb-1";
+        dayHeader.innerHTML = `<span>${day}</span>`;
+        dayCell.appendChild(dayHeader);
+
+        // Filter bookings for this day
+        let dayBookings = bookings.filter(b => b.date === dateKey);
+
+        if (activeTab === 'single') {
+          dayBookings = dayBookings.filter(b => b.room === selectedFilterRoom);
+        }
+
+        totalMonthBookingsCount += dayBookings.length;
+
+        // Separate into Day (08:00 - 18:30) vs Night (19:00 - 23:00)
+        const nightCutoff = timeToMinutes("19:00");
+        const daytimeBookings = dayBookings.filter(b => timeToMinutes(b.startTime) < nightCutoff);
+        const nighttimeBookings = dayBookings.filter(b => timeToMinutes(b.startTime) >= nightCutoff);
+
+        // Sort by start time
+        daytimeBookings.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+        nighttimeBookings.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+        // Render Day Section ONLY IF bookings exist
+        if (daytimeBookings.length > 0) {
+          const daySection = document.createElement('div');
+          daySection.className = "space-y-1 mb-1";
+          
+          const dayBadge = document.createElement('div');
+          dayBadge.className = "text-[10px] font-extrabold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded border border-amber-200/80 inline-block";
+          dayBadge.textContent = "☀️ 日間";
+          daySection.appendChild(dayBadge);
+
+          daytimeBookings.forEach(b => {
+            daySection.appendChild(createBookingCard(b, false));
+          });
+
+          dayCell.appendChild(daySection);
+        }
+
+        // Render Night Section ONLY IF bookings exist
+        if (nighttimeBookings.length > 0) {
+          const nightSection = document.createElement('div');
+          nightSection.className = "space-y-1";
+          
+          const nightBadge = document.createElement('div');
+          nightBadge.className = "text-[10px] font-extrabold text-indigo-800 bg-indigo-100/80 px-1.5 py-0.5 rounded border border-indigo-200/80 inline-block";
+          nightBadge.textContent = "🌙 夜間";
+          nightSection.appendChild(nightBadge);
+
+          nighttimeBookings.forEach(b => {
+            nightSection.appendChild(createBookingCard(b, true));
+          });
+
+          dayCell.appendChild(nightSection);
+        }
+
+        grid.appendChild(dayCell);
+      }
+
+      if (badge) {
+        badge.textContent = `共 ${totalMonthBookingsCount} 筆記錄`;
+      }
+
+      lucide.createIcons();
+    }
+
+    function createBookingCard(b, isNight = false) {
+      const card = document.createElement('div');
+      
+      // Text color based on Category
+      let textColor = "text-slate-900"; // 課程 (黑)
+      if (b.category === "考試") textColor = "text-blue-700 font-bold";
+      if (b.category === "租房") textColor = "text-emerald-700 font-bold";
+      if (b.category === "JV") textColor = "text-amber-700 font-bold";
+
+      // Background color matches Day / Night parent section
+      let bgStyle = isNight 
+        ? "bg-indigo-50/80 border-indigo-200/90" 
+        : "bg-amber-50/80 border-amber-200/90";
+
+      const isCancelled = b.status === 'cancelled';
+      const styleClass = isCancelled 
+        ? 'line-through opacity-60 bg-slate-100 border-slate-300 text-slate-500' 
+        : `${textColor} ${bgStyle} shadow-2xs`;
+
+      card.className = `p-1.5 rounded-lg text-[10px] cursor-pointer transition-all hover:scale-[1.02] border ${styleClass}`;
+      card.onclick = () => window.openCancelModal(b.id);
+
+      const sessionText = (b.sessionIndex && b.totalSessions) ? `${b.sessionIndex}/${b.totalSessions}堂` : '1/1堂';
+      const statusBadge = isCancelled ? '<span class="bg-red-600 text-white text-[9px] px-1 rounded font-bold ml-1">已取消</span>' : '';
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between leading-tight">
+          <span>${b.room} ${b.category}</span>
+          <span class="bg-black/5 px-1 rounded text-[9px] font-semibold">${sessionText}</span>
+        </div>
+        <div class="text-[9px] opacity-90 mt-0.5 font-medium">
+          ${b.startTime} - ${b.endTime} ${statusBadge}
+        </div>
+        ${b.detail ? `<div class="text-[9px] opacity-80 mt-0.5 break-words">${b.detail}</div>` : ''}
+      `;
+
+      return card;
+    }
+
     function showToast(message, type = "info") {
       const toastContainer = document.getElementById('toastContainer');
       if (!toastContainer) return;
