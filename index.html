@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HKSC課室預約管理系統</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Navigation / Top Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-500/20">
+          HKSC
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">HKSC課室預約管理系統</h1>
+          <p class="text-xs text-slate-500">Rm 21, 22, 23, 31, 32, 41, 42 專用時段排程</p>
+        </div>
+      </div>
+
+      <!-- Action Status & Tools -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Cloud Sync Status Badge -->
+        <div id="cloudStatusBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="cloudStatusText">雲端同步中</span>
+        </div>
+
+        <!-- Export CSV Button (Triggers Filter Modal) -->
+        <button onclick="window.openExportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>匯出 CSV</span>
+        </button>
+
+        <!-- Lock / Unlock Button -->
+        <button id="lockToggleBtn" onclick="window.toggleLockModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-300">
+          <i id="lockIcon" data-lucide="lock" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span id="lockStatusText">通行密碼</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Container Wrapper for Screen Lock Blur Effect (Initially Locked and Blurred) -->
+  <div id="appContentWrapper" class="transition-all duration-300 flex-1 flex flex-col blur-md pointer-events-none select-none">
+    <!-- Main Container (Expanded max-width to 1600px for wider calendar) -->
+    <main class="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 flex-1 flex flex-col gap-5">
+    
+    <!-- TOP SECTION: Booking Form (Positioned above the calendar) -->
+    <section class="w-full">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5">
+        
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
+            新增預約記錄
+          </h2>
+          <span class="text-xs text-slate-400">填寫表單自動生成多日排程</span>
+        </div>
+
+        <form id="bookingForm" onsubmit="window.handleFormSubmit(event)" class="space-y-3">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+            
+            <!-- 1. Room Selector -->
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">1. 房間號碼 *</label>
+              <select id="roomSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-bold">
+                <option value="Rm 21">Rm 21</option>
+                <option value="Rm 22">Rm 22</option>
+                <option value="Rm 23">Rm 23</option>
+                <option value="Rm 31">Rm 31</option>
+                <option value="Rm 32">Rm 32</option>
+                <option value="Rm 41">Rm 41</option>
+                <option value="Rm 42">Rm 42</option>
+              </select>
+            </div>
+
+            <!-- 2. Purpose Category & Detail -->
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">2. 分類 *</label>
+              <select id="categorySelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-bold">
+                <option value="課程">課程 (黑)</option>
+                <option value="考試">考試 (藍)</option>
+                <option value="租房">租房 (綠)</option>
+                <option value="JV">JV (橙)</option>
+              </select>
+            </div>
+
+            <div class="lg:col-span-3">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">3. 詳細備註 / 名稱</label>
+              <input type="text" id="detailInput" placeholder="例如：數學補習 / 模擬考" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+            </div>
+
+            <!-- 3. Date Range picker -->
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">開始日期 *</label>
+              <input type="date" id="startDateInput" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+            </div>
+
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">結束日期 *</label>
+              <input type="date" id="endDateInput" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+            </div>
+
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end pt-1">
+            
+            <!-- 4. Weekday Checkboxes -->
+            <div class="lg:col-span-5">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">重複星期 *（可多選）</label>
+              <div class="grid grid-cols-7 gap-1 text-center">
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="1" checked class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">一</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="2" class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">二</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="3" class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">三</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="4" class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">四</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="5" class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">五</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="6" class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">六</div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="weekdays" value="0" class="peer sr-only">
+                  <div class="py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">日</div>
+                </label>
+              </div>
+            </div>
+
+            <!-- 5. Time Selectors -->
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">開始時間 *</label>
+              <select id="startTimeSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+              </select>
+            </div>
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">結束時間 *</label>
+              <select id="endTimeSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800">
+              </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="lg:col-span-3">
+              <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 text-xs h-[38px]">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>確定提交預約</span>
+              </button>
+            </div>
+
+          </div>
+
+        </form>
+
+      </div>
+    </section>
+
+    <!-- BOTTOM SECTION: Calendar View (Full width below form) -->
+    <section class="w-full flex flex-col space-y-4">
+      
+      <!-- Top Control Bar (Tabs & Filters) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        
+        <!-- View Mode Tabs -->
+        <div class="inline-flex p-1 bg-slate-100 rounded-xl">
+          <button id="tabSingle" onclick="window.switchTab('single')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs">
+            單一房間月曆
+          </button>
+          <button id="tabAll" onclick="window.switchTab('all')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+            全房間總覽
+          </button>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          
+          <!-- Single Room Filter Dropdown -->
+          <div id="singleRoomFilterContainer" class="flex items-center gap-1.5">
+            <span class="text-xs font-medium text-slate-500">房間:</span>
+            <select id="filterRoomSelect" onchange="window.onFilterChange()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="Rm 21">Rm 21</option>
+              <option value="Rm 22">Rm 22</option>
+              <option value="Rm 23">Rm 23</option>
+              <option value="Rm 31">Rm 31</option>
+              <option value="Rm 32">Rm 32</option>
+              <option value="Rm 41">Rm 41</option>
+              <option value="Rm 42">Rm 42</option>
+            </select>
+          </div>
+
+          <!-- Month & Year Selector -->
+          <div class="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1">
+            <button onclick="window.changeMonth(-1)" class="p-1 hover:bg-slate-200 rounded text-slate-600">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <input type="month" id="monthPicker" onchange="window.onFilterChange()" class="bg-transparent border-0 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+            <button onclick="window.changeMonth(1)" class="p-1 hover:bg-slate-200 rounded text-slate-600">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Legend Banner -->
+      <div class="bg-white rounded-xl border border-slate-200 px-4 py-2 flex items-center justify-between text-xs font-medium text-slate-600 flex-wrap gap-2">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="font-bold text-slate-800">分類色彩標示：</span>
+          <span class="inline-flex items-center gap-1 text-slate-900 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-slate-900"></span> 課程 (黑)</span>
+          <span class="inline-flex items-center gap-1 text-blue-700 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> 考試 (藍)</span>
+          <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> 租房 (綠)</span>
+          <span class="inline-flex items-center gap-1 text-amber-700 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> JV (橙)</span>
+        </div>
+        <div class="text-[11px] text-slate-400 font-normal">
+          * Rm 23 允許重疊預約
+        </div>
+      </div>
+
+      <!-- Calendar Table Box -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden w-full">
+        
+        <!-- Calendar Header Bar -->
+        <div class="p-3.5 border-b border-slate-100 flex items-center justify-between">
+          <h3 id="calendarTitle" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
+            月曆檢視
+          </h3>
+          <span id="bookingCountBadge" class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
+            共 0 筆記錄
+          </span>
+        </div>
+
+        <!-- Days of Week Header -->
+        <div class="calendar-grid bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-600 py-2">
+          <div>一</div>
+          <div>二</div>
+          <div>三</div>
+          <div>四</div>
+          <div>五</div>
+          <div class="text-blue-600">六</div>
+          <div class="text-rose-600">日</div>
+        </div>
+
+        <!-- Calendar Days Grid -->
+        <div id="calendarGrid" class="calendar-grid bg-slate-200 gap-px">
+          <!-- Dynamically generated by JS -->
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+  </div>
+
+  <!-- MODAL 1: Passcode Authorization Modal (Strict Screen Lock by default) -->
+  <div id="passcodeModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="shield-lock" class="w-5 h-5 text-blue-600"></i>
+          請輸入系統通行密碼
+        </h3>
+        <button id="modalCloseBtn" onclick="window.closePasscodeModal()" class="text-slate-400 hover:text-slate-600 hidden">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-xs text-slate-500">本系統僅限授權人員使用，請輸入密碼以進入預約版面：</p>
+        <label class="block text-xs font-semibold text-slate-700">管理者密碼</label>
+        <input type="password" id="passcodeInput" placeholder="請輸入通行密碼" onkeydown="if(event.key==='Enter') window.verifyPasscode()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <p id="passcodeError" class="text-xs text-red-500 hidden font-medium">密碼錯誤，請重新輸入！</p>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="window.verifyPasscode()" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all">
+          確認解鎖並進入
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Enhanced Cancel & Reschedule Modal -->
+  <div id="cancelRescheduleModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
+          預約記錄異動 / 取消
+        </h3>
+        <button onclick="window.closeCancelRescheduleModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Selected Booking Summary -->
+      <div id="modalBookingSummary" class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 text-slate-700 border border-slate-200">
+        <!-- JS fills this -->
+      </div>
+
+      <!-- Option 1: Reschedule Form -->
+      <div class="border border-blue-100 bg-blue-50/50 p-3 rounded-xl space-y-2">
+        <div class="text-xs font-bold text-blue-800 flex items-center gap-1">
+          <i data-lucide="calendar-days" class="w-4 h-4"></i>
+          選項 A：變更預約資料 (轉日期 / 時段 / 房間)
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-slate-600 mb-1 font-semibold">新日期</label>
+            <input type="date" id="rescheduleDate" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:ring-1 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1 font-semibold">新房間</label>
+            <select id="rescheduleRoom" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:ring-1 focus:ring-blue-500 font-semibold">
+              <option value="Rm 21">Rm 21</option>
+              <option value="Rm 22">Rm 22</option>
+              <option value="Rm 23">Rm 23</option>
+              <option value="Rm 31">Rm 31</option>
+              <option value="Rm 32">Rm 32</option>
+              <option value="Rm 41">Rm 41</option>
+              <option value="Rm 42">Rm 42</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1 font-semibold">開始時間</label>
+            <select id="rescheduleStartTime" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:ring-1 focus:ring-blue-500"></select>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1 font-semibold">結束時間</label>
+            <select id="rescheduleEndTime" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:ring-1 focus:ring-blue-500"></select>
+          </div>
+        </div>
+        <button onclick="window.rescheduleBooking()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs">
+          確認變更預約
+        </button>
+      </div>
+
+      <!-- Option 2: Confirm Cancel (Strikethrough) -->
+      <div class="border border-red-100 bg-red-50/50 p-3 rounded-xl space-y-2">
+        <div class="text-xs font-bold text-red-800 flex items-center gap-1">
+          <i data-lucide="minus-circle" class="w-4 h-4"></i>
+          選項 B：確定取消預約（記錄將保留並加上刪除線）
+        </div>
+        <button onclick="window.confirmCancelBooking()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs">
+          確定取消預約
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Conflict Modal -->
+  <div id="conflictModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-red-600 flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+          預約時段衝突警告
+        </h3>
+        <button onclick="window.closeConflictModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-600">
+        檢測到以下日期時段已有預約，無法重複預約：
+      </div>
+
+      <div id="conflictList" class="max-h-48 overflow-y-auto space-y-2">
+        <!-- Conflicts listed here -->
+      </div>
+
+      <div class="pt-2">
+        <button onclick="window.closeConflictModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs">
+          返回修改
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: CSV Export Selection Modal -->
+  <div id="exportModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="download" class="w-5 h-5 text-emerald-600"></i>
+          匯出 CSV 預約記錄
+        </h3>
+        <button onclick="window.closeExportModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">1. 選擇下載月份</label>
+          <select id="exportMonthSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <option value="all">全部月份記錄</option>
+            <!-- JS dynamically populates months -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">2. 選擇房間號碼</label>
+          <select id="exportRoomSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <option value="all">全部房間號碼</option>
+            <option value="Rm 21">Rm 21</option>
+            <option value="Rm 22">Rm 22</option>
+            <option value="Rm 23">Rm 23</option>
+            <option value="Rm 31">Rm 31</option>
+            <option value="Rm 32">Rm 32</option>
+            <option value="Rm 41">Rm 41</option>
+            <option value="Rm 42">Rm 42</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">3. 記錄狀態</label>
+          <select id="exportStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <option value="all">包含已取消與有效預約</option>
+            <option value="active">僅有效預約記錄</option>
+            <option value="cancelled">僅已取消記錄</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="window.closeExportModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
+          取消
+        </button>
+        <button onclick="window.confirmExportCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md shadow-emerald-600/20">
+          確認下載 CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Firebase SDK Imports & Application Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global App State Variables
+    let bookings = [];
+    let activeTab = 'single'; // 'single' or 'all'
+    let selectedYear = 2026;
+    let selectedMonth = 8; // 0-indexed: 8 = September
+    let selectedFilterRoom = 'Rm 21';
+    let targetBookingId = null;
+    let isUnlocked = false;
+
+    // Firebase Credentials Setup
+    const appId = typeof __app_id !== 'undefined' ? __app_id : '7-rooms-booking-app';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config
+      ? JSON.parse(__firebase_config)
+      : {
+          apiKey: "demo-api-key",
+          authDomain: "demo-app.firebaseapp.com",
+          projectId: "demo-app",
+          storageBucket: "demo-app.appspot.com",
+          messagingSenderId: "123456789",
+          appId: "1:123456789:web:123456"
+        };
+
+    let db = null;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+    } catch (e) {
+      console.warn("Firebase initialization skipped or in offline demo mode:", e);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populateTimeSelects();
+      populateRescheduleTimeSelects();
+
+      const today = new Date();
+      const year = today.getFullYear() < 2026 ? 2026 : today.getFullYear();
+      const month = today.getFullYear() < 2026 ? 8 : today.getMonth();
+      
+      selectedYear = year;
+      selectedMonth = month;
+
+      const formattedMonth = (selectedMonth + 1).toString().padStart(2, '0');
+      document.getElementById('monthPicker').value = `${selectedYear}-${formattedMonth}`;
+      document.getElementById('startDateInput').value = `${selectedYear}-${formattedMonth}-01`;
+      document.getElementById('endDateInput').value = `${selectedYear}-${formattedMonth}-15`;
+
+      // Always show strict lock overlay on load until valid password is entry
+      lockUI();
+
+      loadLocalBookings();
+      setupCloudSync();
+      renderCalendar();
+      lucide.createIcons();
+    });
+
+    function lockUI() {
+      isUnlocked = false;
+      const wrapper = document.getElementById('appContentWrapper');
+      if (wrapper) {
+        wrapper.classList.add('blur-md', 'pointer-events-none', 'select-none');
+      }
+      const closeBtn = document.getElementById('modalCloseBtn');
+      if (closeBtn) closeBtn.classList.add('hidden');
+
+      document.getElementById('passcodeModal').classList.remove('hidden');
+      updateLockUI();
+    }
+
+    function unlockUI() {
+      isUnlocked = true;
+      const wrapper = document.getElementById('appContentWrapper');
+      if (wrapper) {
+        wrapper.classList.remove('blur-md', 'pointer-events-none', 'select-none');
+      }
+      document.getElementById('passcodeModal').classList.add('hidden');
+      updateLockUI();
+    }
+
+    window.verifyPasscode = function() {
+      const input = document.getElementById('passcodeInput').value;
+      if (input === 'Hksc1959!') {
+        document.getElementById('passcodeError').classList.add('hidden');
+        document.getElementById('passcodeInput').value = '';
+        unlockUI();
+        showToast("解鎖成功！歡迎使用預約系統", "success");
+      } else {
+        document.getElementById('passcodeError').classList.remove('hidden');
+      }
+    };
+
+    window.closePasscodeModal = function() {
+      if (!isUnlocked) return; // Strict lock: disallow closing if not unlocked
+      document.getElementById('passcodeModal').classList.add('hidden');
+      document.getElementById('passcodeError').classList.add('hidden');
+      document.getElementById('passcodeInput').value = '';
+    };
+
+    window.toggleLockModal = function() {
+      if (isUnlocked) {
+        if (confirm("確定要手動鎖定系統嗎？")) {
+          lockUI();
+          showToast("已手動鎖定系統", "info");
+        }
+      } else {
+        document.getElementById('passcodeModal').classList.remove('hidden');
+      }
+    };
+
+    function updateLockUI() {
+      const lockBtn = document.getElementById('lockToggleBtn');
+      const lockIcon = document.getElementById('lockIcon');
+      const lockStatusText = document.getElementById('lockStatusText');
+      const closeBtn = document.getElementById('modalCloseBtn');
+
+      if (isUnlocked) {
+        if (lockBtn) lockBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition-all";
+        if (lockStatusText) lockStatusText.textContent = "已授權解鎖 (點擊鎖定)";
+        if (lockIcon) lockIcon.setAttribute('data-lucide', 'unlock');
+        if (closeBtn) closeBtn.classList.remove('hidden');
+      } else {
+        if (lockBtn) lockBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300";
+        if (lockStatusText) lockStatusText.textContent = "系統已鎖定";
+        if (lockIcon) lockIcon.setAttribute('data-lucide', 'lock');
+        if (closeBtn) closeBtn.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function renderCalendar() {
+      const calendarGrid = document.getElementById('calendarGrid');
+      if (!calendarGrid) return;
+      calendarGrid.innerHTML = '';
+
+      const titleMonth = (selectedMonth + 1).toString().padStart(2, '0');
+      const roomTitleStr = activeTab === 'single' ? `[${selectedFilterRoom}] ` : '[全房間總覽] ';
+      document.getElementById('calendarTitle').innerHTML = `
+        <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
+        ${selectedYear} 年 ${titleMonth} 月 ${roomTitleStr}預約狀況
+      `;
+
+      const currentMonthPrefix = `${selectedYear}-${titleMonth}`;
+      let filtered = bookings.filter(b => b.date && b.date.startsWith(currentMonthPrefix));
+
+      if (activeTab === 'single') {
+        filtered = filtered.filter(b => b.room === selectedFilterRoom);
+      }
+
+      document.getElementById('bookingCountBadge').textContent = `共 ${filtered.length} 筆記錄`;
+
+      const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1);
+      const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+
+      let startDayIndex = firstDayOfMonth.getDay() - 1;
+      if (startDayIndex === -1) startDayIndex = 6;
+
+      for (let i = 0; i < startDayIndex; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'bg-slate-50/50 min-h-[170px] p-1.5 border-b border-r border-slate-100 opacity-40';
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      const NIGHT_START_MINUTES = 19 * 60; // 19:00 (7:00 PM)
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayStr = day.toString().padStart(2, '0');
+        const fullDateStr = `${currentMonthPrefix}-${dayStr}`;
+
+        const dayBookings = filtered.filter(b => b.date === fullDateStr);
+
+        dayBookings.sort((a, b) => {
+          if (activeTab === 'all' && a.room !== b.room) {
+            return a.room.localeCompare(b.room);
+          }
+          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+        });
+
+        // Split into 2 Tiers: Day (08:00 - 18:30) & Night (19:00 - 23:00)
+        const dayTierBookings = dayBookings.filter(b => timeToMinutes(b.startTime) < NIGHT_START_MINUTES);
+        const nightTierBookings = dayBookings.filter(b => timeToMinutes(b.startTime) >= NIGHT_START_MINUTES);
+
+        const cell = document.createElement('div');
+        cell.className = 'bg-white min-h-[180px] p-1.5 border-b border-r border-slate-200 flex flex-col justify-between hover:bg-slate-50/50 transition-all';
+
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'flex items-center justify-between mb-1 border-b pb-0.5';
+        
+        const isToday = isCurrentToday(selectedYear, selectedMonth, day);
+        dateHeader.innerHTML = `
+          <span class="text-xs font-bold ${isToday ? 'w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center' : 'text-slate-700'}">
+            ${day}
+          </span>
+          ${dayBookings.length > 0 ? `<span class="text-[10px] font-semibold text-slate-400">${dayBookings.length}項</span>` : ''}
+        `;
+
+        const tiersContainer = document.createElement('div');
+        tiersContainer.className = 'flex-1 space-y-1.5 overflow-y-auto max-h-[220px]';
+
+        // TIER 1: Day Tier (8am - 6:30pm)
+        if (dayTierBookings.length > 0) {
+          const dayTierDiv = document.createElement('div');
+          dayTierDiv.className = 'space-y-1';
+          dayTierDiv.innerHTML = `<div class="text-[9px] font-bold text-amber-700 bg-amber-50/80 px-1 py-0.5 rounded flex items-center justify-between"><span>☀️ 日間 (08:00-18:30)</span><span class="text-[8px] opacity-75">${dayTierBookings.length}</span></div>`;
+
+          dayTierBookings.forEach(booking => {
+            dayTierDiv.appendChild(createBookingCardElement(booking));
+          });
+          tiersContainer.appendChild(dayTierDiv);
+        }
+
+        // TIER 2: Night Tier (7pm - 11pm)
+        if (nightTierBookings.length > 0) {
+          const nightTierDiv = document.createElement('div');
+          nightTierDiv.className = 'space-y-1';
+          nightTierDiv.innerHTML = `<div class="text-[9px] font-bold text-indigo-700 bg-indigo-50/80 px-1 py-0.5 rounded flex items-center justify-between"><span>🌙 夜間 (19:00-23:00)</span><span class="text-[8px] opacity-75">${nightTierBookings.length}</span></div>`;
+
+          nightTierBookings.forEach(booking => {
+            nightTierDiv.appendChild(createBookingCardElement(booking));
+          });
+          tiersContainer.appendChild(nightTierDiv);
+        }
+
+        cell.appendChild(dateHeader);
+        cell.appendChild(tiersContainer);
+        calendarGrid.appendChild(cell);
+      }
+
+      lucide.createIcons();
+    }
+
+    function createBookingCardElement(booking) {
+      const card = document.createElement('div');
+      const isCancelled = booking.status === 'cancelled';
+
+      let colorStyle = 'bg-slate-100 text-slate-900 border-slate-300';
+      if (booking.category === '考試') colorStyle = 'bg-blue-50 text-blue-900 border-blue-200';
+      if (booking.category === '租房') colorStyle = 'bg-emerald-50 text-emerald-900 border-emerald-200';
+      if (booking.category === 'JV') colorStyle = 'bg-amber-50 text-amber-900 border-amber-200';
+
+      if (isCancelled) {
+        colorStyle = 'bg-slate-100 text-slate-400 border-slate-200 line-through opacity-70';
+      }
+
+      card.className = `p-1 rounded border text-[10px] leading-tight font-medium relative group transition-all shadow-2xs ${colorStyle}`;
+
+      const roomPrefix = activeTab === 'all' ? `<span class="font-extrabold mr-0.5 text-blue-700">[${booking.room}]</span>` : '';
+      const sessionText = (booking.sessionIndex && booking.totalSessions) ? `<span class="text-[8px] sm:text-[9px] font-bold text-blue-600 no-underline bg-white px-1 rounded border border-blue-200 inline-block ml-0.5">${booking.sessionIndex}/${booking.totalSessions}堂</span>` : '';
+      const detailText = booking.detail ? `：${booking.detail}` : '';
+      const cancelledBadge = isCancelled ? `<span class="inline-block bg-red-100 text-red-600 text-[8px] px-1 rounded no-underline font-bold ml-1">已取消</span>` : '';
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-0.5">
+          <div class="flex-1 min-w-0 break-words leading-tight">
+            ${roomPrefix}<span class="font-bold text-[10px] sm:text-[11px]">${booking.startTime}-${booking.endTime}</span>${sessionText}${cancelledBadge}
+            <div class="text-[9px] sm:text-[10px] font-medium text-slate-700 mt-0.5 break-words">${booking.category}${detailText}</div>
+          </div>
+          <button onclick="window.openCancelModal('${booking.id}')" title="異動/取消" class="text-slate-400 hover:text-blue-600 p-0.5 rounded shrink-0 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity no-underline">
+            <i data-lucide="edit-2" class="w-3 h-3"></i>
+          </button>
+        </div>
+      `;
+      return card;
+    }
+
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function isCurrentToday(y, m, d) {
+      const today = new Date();
+      return today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
+    }
+
+    function populateTimeSelects() {
+      const startSelect = document.getElementById('startTimeSelect');
+      const endSelect = document.getElementById('endTimeSelect');
+      if (!startSelect || !endSelect) return;
+      startSelect.innerHTML = '';
+      endSelect.innerHTML = '';
+
+      const times = [];
+      for (let h = 8; h <= 23; h++) {
+        const hh = h.toString().padStart(2, '0');
+        times.push(`${hh}:00`);
+        if (h !== 23) times.push(`${hh}:30`);
+      }
+
+      times.forEach(t => {
+        startSelect.add(new Option(t, t));
+        endSelect.add(new Option(t, t));
+      });
+
+      startSelect.value = "09:00";
+      endSelect.value = "11:00";
+    }
+
+    function populateRescheduleTimeSelects() {
+      const startSelect = document.getElementById('rescheduleStartTime');
+      const endSelect = document.getElementById('rescheduleEndTime');
+      if (!startSelect || !endSelect) return;
+      startSelect.innerHTML = '';
+      endSelect.innerHTML = '';
+
+      const times = [];
+      for (let h = 8; h <= 23; h++) {
+        const hh = h.toString().padStart(2, '0');
+        times.push(`${hh}:00`);
+        if (h !== 23) times.push(`${hh}:30`);
+      }
+
+      times.forEach(t => {
+        startSelect.add(new Option(t, t));
+        endSelect.add(new Option(t, t));
+      });
+    }
+
+    function loadLocalBookings() {
+      try {
+        const saved = localStorage.getItem('hksc_bookings');
+        if (saved) bookings = JSON.parse(saved);
+      } catch (e) {
+        console.error("Local storage error:", e);
+      }
+    }
+
+    function saveLocalBookings() {
+      try {
+        localStorage.setItem('hksc_bookings', JSON.stringify(bookings));
+      } catch (e) {
+        console.error("Local storage save error:", e);
+      }
+    }
+
+    function setupCloudSync() {
+      if (!db) return;
+      const badge = document.getElementById('cloudStatusBadge');
+      const badgeText = document.getElementById('cloudStatusText');
+      if (badge) badge.classList.remove('hidden');
+
+      try {
+        const colRef = collection(db, 'artifacts', appId, 'public_data');
+        onSnapshot(colRef, (snapshot) => {
+          const cloudData = [];
+          snapshot.forEach(docSnap => {
+            cloudData.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          if (cloudData.length > 0) {
+            bookings = cloudData;
+            saveLocalBookings();
+            renderCalendar();
+          }
+          if (badgeText) badgeText.textContent = "雲端即時同步中";
+        }, (err) => {
+          console.warn("Firestore sync warning:", err);
+          if (badgeText) badgeText.textContent = "離線備份模式";
+        });
+      } catch (err) {
+        console.warn("Cloud sync setup failed:", err);
+      }
+    }
+
+    window.switchTab = function(tab) {
+      activeTab = tab;
+      const btnSingle = document.getElementById('tabSingle');
+      const btnAll = document.getElementById('tabAll');
+      const roomContainer = document.getElementById('singleRoomFilterContainer');
+
+      if (tab === 'single') {
+        btnSingle.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs";
+        btnAll.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        if (roomContainer) roomContainer.classList.remove('hidden');
+      } else {
+        btnAll.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-xs";
+        btnSingle.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        if (roomContainer) roomContainer.classList.add('hidden');
+      }
+      renderCalendar();
+    };
+
+    window.onFilterChange = function() {
+      const roomSel = document.getElementById('filterRoomSelect');
+      const monthPicker = document.getElementById('monthPicker');
+      if (roomSel) selectedFilterRoom = roomSel.value;
+      if (monthPicker && monthPicker.value) {
+        const [y, m] = monthPicker.value.split('-').map(Number);
+        selectedYear = y;
+        selectedMonth = m - 1;
+      }
+      renderCalendar();
+    };
+
+    window.changeMonth = function(delta) {
+      selectedMonth += delta;
+      if (selectedMonth < 0) {
+        selectedMonth = 11;
+        selectedYear--;
+      } else if (selectedMonth > 11) {
+        selectedMonth = 0;
+        selectedYear++;
+      }
+      const formattedMonth = (selectedMonth + 1).toString().padStart(2, '0');
+      document.getElementById('monthPicker').value = `${selectedYear}-${formattedMonth}`;
+      renderCalendar();
+    };
+
+    function getMatchingDates(startDate, endDate, selectedWeekdays) {
+      const dates = [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const curr = new Date(start);
+
+      while (curr <= end) {
+        const dayOfWeek = curr.getDay();
+        if (selectedWeekdays.includes(dayOfWeek)) {
+          const yyyy = curr.getFullYear();
+          const mm = (curr.getMonth() + 1).toString().padStart(2, '0');
+          const dd = curr.getDate().toString().padStart(2, '0');
+          dates.push(`${yyyy}-${mm}-${dd}`);
+        }
+        curr.setDate(curr.getDate() + 1);
+      }
+      return dates;
+    }
+
+    function checkConflict(room, date, startTime, endTime, excludeBookingId = null) {
+      if (room === 'Rm 23') return false; // Rm 23 allows overlapping
+
+      const newStart = timeToMinutes(startTime);
+      const newEnd = timeToMinutes(endTime);
+
+      return bookings.some(b => {
+        if (b.id === excludeBookingId) return false;
+        if (b.status === 'cancelled') return false;
+        if (b.room !== room || b.date !== date) return false;
+
+        const existStart = timeToMinutes(b.startTime);
+        const existEnd = timeToMinutes(b.endTime);
+
+        return (newStart < existEnd && newEnd > existStart);
+      });
+    }
+
+    window.handleFormSubmit = async function(e) {
+      e.preventDefault();
+      if (!isUnlocked) {
+        lockUI();
+        return;
+      }
+
+      const room = document.getElementById('roomSelect').value;
+      const category = document.getElementById('categorySelect').value;
+      const detail = document.getElementById('detailInput').value.trim();
+      const startDate = document.getElementById('startDateInput').value;
+      const endDate = document.getElementById('endDateInput').value;
+      const startTime = document.getElementById('startTimeSelect').value;
+      const endTime = document.getElementById('endTimeSelect').value;
+
+      if (timeToMinutes(startTime) >= timeToMinutes(endTime)) {
+        showToast("結束時間必須晚於開始時間！", "error");
+        return;
+      }
+
+      const weekdayBoxes = document.querySelectorAll('input[name="weekdays"]:checked');
+      const selectedWeekdays = Array.from(weekdayBoxes).map(cb => parseInt(cb.value));
+
+      if (selectedWeekdays.length === 0) {
+        showToast("請至少選擇一個重複星期！", "error");
+        return;
+      }
+
+      const targetDates = getMatchingDates(startDate, endDate, selectedWeekdays);
+
+      if (targetDates.length === 0) {
+        showToast("在選擇的日期範圍內沒有符合對應星期的日期！", "error");
+        return;
+      }
+
+      // Check conflicts
+      const conflicts = [];
+      targetDates.forEach(date => {
+        if (checkConflict(room, date, startTime, endTime)) {
+          conflicts.push({ date, room, startTime, endTime });
+        }
+      });
+
+      if (conflicts.length > 0) {
+        const conflictList = document.getElementById('conflictList');
+        conflictList.innerHTML = conflicts.map(c => `
+          <div class="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+            <strong>${c.date}</strong> [${c.room}] ${c.startTime} - ${c.endTime} 時段已被預約
+          </div>
+        `).join('');
+        document.getElementById('conflictModal').classList.remove('hidden');
+        return;
+      }
+
+      const totalSessions = targetDates.length;
+      const newBookings = [];
+
+      for (let i = 0; i < totalSessions; i++) {
+        const bookingObj = {
+          id: 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          room,
+          category,
+          detail,
+          date: targetDates[i],
+          startTime,
+          endTime,
+          sessionIndex: i + 1,
+          totalSessions,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        };
+        newBookings.push(bookingObj);
+      }
+
+      bookings.push(...newBookings);
+      saveLocalBookings();
+
+      if (db) {
+        try {
+          for (const item of newBookings) {
+            await setDoc(doc(db, 'artifacts', appId, 'public_data', item.id), item);
+          }
+        } catch (err) {
+          console.error("Cloud save error:", err);
+        }
+      }
+
+      renderCalendar();
+      showToast(`成功新增 ${newBookings.length} 筆預約記錄！`, "success");
+      document.getElementById('detailInput').value = '';
+    };
+
+    window.openCancelModal = function(bookingId) {
+      if (!isUnlocked) {
+        lockUI();
+        return;
+      }
+      targetBookingId = bookingId;
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const summary = document.getElementById('modalBookingSummary');
+      summary.innerHTML = `
+        <div><strong>房間：</strong> ${booking.room}</div>
+        <div><strong>日期：</strong> ${booking.date}</div>
+        <div><strong>時段：</strong> ${booking.startTime} - ${booking.endTime}</div>
+        <div><strong>分類/備註：</strong> ${booking.category} ${booking.detail ? `(${booking.detail})` : ''}</div>
+        <div><strong>狀態：</strong> ${booking.status === 'cancelled' ? '已取消' : '有效預約'}</div>
+      `;
+
+      document.getElementById('rescheduleDate').value = booking.date;
+      document.getElementById('rescheduleRoom').value = booking.room;
+      document.getElementById('rescheduleStartTime').value = booking.startTime;
+      document.getElementById('rescheduleEndTime').value = booking.endTime;
+
+      document.getElementById('cancelRescheduleModal').classList.remove('hidden');
+    };
+
+    window.closeCancelRescheduleModal = function() {
+      document.getElementById('cancelRescheduleModal').classList.add('hidden');
+      targetBookingId = null;
+    };
+
+    window.rescheduleBooking = async function() {
+      if (!targetBookingId) return;
+      const booking = bookings.find(b => b.id === targetBookingId);
+      if (!booking) return;
+
+      const newDate = document.getElementById('rescheduleDate').value;
+      const newRoom = document.getElementById('rescheduleRoom').value;
+      const newStart = document.getElementById('rescheduleStartTime').value;
+      const newEnd = document.getElementById('rescheduleEndTime').value;
+
+      if (timeToMinutes(newStart) >= timeToMinutes(newEnd)) {
+        showToast("結束時間必須晚於開始時間！", "error");
+        return;
+      }
+
+      if (checkConflict(newRoom, newDate, newStart, newEnd, targetBookingId)) {
+        showToast(`變更失敗：[${newRoom}] 在 ${newDate} ${newStart}-${newEnd} 時段已有預約！`, "error");
+        return;
+      }
+
+      booking.date = newDate;
+      booking.room = newRoom;
+      booking.startTime = newStart;
+      booking.endTime = newEnd;
+      booking.status = 'active';
+
+      saveLocalBookings();
+
+      if (db) {
+        try {
+          await setDoc(doc(db, 'artifacts', appId, 'public_data', booking.id), booking);
+        } catch (err) {
+          console.error("Cloud update error:", err);
+        }
+      }
+
+      window.closeCancelRescheduleModal();
+      renderCalendar();
+      showToast("成功更新預約記錄！", "success");
+    };
+
+    window.confirmCancelBooking = async function() {
+      if (!targetBookingId) return;
+      const booking = bookings.find(b => b.id === targetBookingId);
+      if (!booking) return;
+
+      booking.status = 'cancelled';
+      saveLocalBookings();
+
+      if (db) {
+        try {
+          await setDoc(doc(db, 'artifacts', appId, 'public_data', booking.id), booking);
+        } catch (err) {
+          console.error("Cloud status update error:", err);
+        }
+      }
+
+      window.closeCancelRescheduleModal();
+      renderCalendar();
+      showToast("已成功取消該預約（記錄保留並加上刪除線）", "info");
+    };
+
+    window.closeConflictModal = function() {
+      document.getElementById('conflictModal').classList.add('hidden');
+    };
+
+    window.openExportModal = function() {
+      if (!isUnlocked) {
+        lockUI();
+        return;
+      }
+      const select = document.getElementById('exportMonthSelect');
+      select.innerHTML = '<option value="all">全部月份記錄</option>';
+
+      const monthsSet = new Set();
+      bookings.forEach(b => {
+        if (b.date && b.date.length >= 7) {
+          monthsSet.add(b.date.slice(0, 7));
+        }
+      });
+
+      Array.from(monthsSet).sort().reverse().forEach(m => {
+        select.add(new Option(`${m} 月記錄`, m));
+      });
+
+      document.getElementById('exportModal').classList.remove('hidden');
+    };
+
+    window.closeExportModal = function() {
+      document.getElementById('exportModal').classList.add('hidden');
+    };
+
+    window.confirmExportCSV = function() {
+      const selectedMonthVal = document.getElementById('exportMonthSelect').value;
+      const selectedRoomVal = document.getElementById('exportRoomSelect').value;
+      const selectedStatusVal = document.getElementById('exportStatusSelect').value;
+
+      let filtered = [...bookings];
+
+      if (selectedMonthVal !== 'all') {
+        filtered = filtered.filter(b => b.date && b.date.startsWith(selectedMonthVal));
+      }
+
+      if (selectedRoomVal !== 'all') {
+        filtered = filtered.filter(b => b.room === selectedRoomVal);
+      }
+
+      if (selectedStatusVal === 'active') {
+        filtered = filtered.filter(b => b.status !== 'cancelled');
+      } else if (selectedStatusVal === 'cancelled') {
+        filtered = filtered.filter(b => b.status === 'cancelled');
+      }
+
+      if (filtered.length === 0) {
+        showToast("根據選取的條件，沒有符合的預約記錄可供匯出！", "info");
+        return;
+      }
+
+      filtered.sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        if (a.startTime !== b.startTime) return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+        return a.room.localeCompare(b.room);
+      });
+
+      let csvStr = "\uFEFF";
+      csvStr += "日期,房間號碼,分類,堂數,開始時間,結束時間,狀態,詳細備註\n";
+
+      filtered.forEach(b => {
+        const detailClean = (b.detail || '').replace(/"/g, '""');
+        const sessionStr = (b.sessionIndex && b.totalSessions) ? `${b.sessionIndex}/${b.totalSessions}` : '1/1';
+        const statusStr = b.status === 'cancelled' ? '已取消' : '有效預約';
+        csvStr += `"${b.date}","${b.room}","${b.category}","${sessionStr}","${b.startTime}","${b.endTime}","${statusStr}","${detailClean}"\n`;
+      });
+
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `HKSC課室預約記錄_${selectedMonthVal}_${selectedRoomVal}_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.closeExportModal();
+      showToast(`已成功匯出 ${filtered.length} 筆預約記錄！`, "success");
+    };
+
+    // UI Toast Helper
+    function showToast(message, type = "info") {
+      const toastContainer = document.getElementById('toastContainer');
+      if (!toastContainer) return;
+      const toast = document.createElement('div');
+      
+      let bgColor = "bg-slate-800 text-white";
+      if (type === "success") bgColor = "bg-emerald-600 text-white";
+      if (type === "error") bgColor = "bg-red-600 text-white";
+
+      toast.className = `${bgColor} text-xs font-bold px-4 py-3 rounded-xl shadow-xl transition-all duration-300 flex items-center gap-2 pointer-events-auto`;
+      toast.innerHTML = `<span>${message}</span>`;
+
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
