@@ -326,7 +326,6 @@
         <p class="text-xs text-slate-500">本系統僅限授權人員使用，請輸入密碼以進入預約版面：</p>
         <label class="block text-xs font-semibold text-slate-700">管理者密碼</label>
         <input type="password" id="passcodeInput" placeholder="請輸入通行密碼" onkeydown="if(event.key==='Enter') window.verifyPasscode()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <p id="passcodeError" class="text-xs text-red-500 hidden font-medium">密碼錯誤，請重新輸入！(提示: Hksc1959!)</p>
       </div>
 
       <div class="pt-2">
@@ -570,18 +569,17 @@
 
     window.verifyPasscode = function() {
       const input = document.getElementById('passcodeInput');
-      const errorMsg = document.getElementById('passcodeError');
       if (!input) return;
       
       const val = input.value.trim();
       if (val === 'Hksc1959!') {
-        if (errorMsg) errorMsg.classList.add('hidden');
         input.value = '';
         unlockUI();
         showToast("解鎖成功！歡迎使用 HKSC 課室預約管理系統", "success");
       } else {
-        if (errorMsg) errorMsg.classList.remove('hidden');
-        input.select();
+        // 密碼錯誤：不顯示任何錯誤提示訊息，僅靜默清空輸入框
+        input.value = '';
+        input.focus();
       }
     };
 
@@ -650,7 +648,10 @@
       const badgeText = document.getElementById('cloudStatusText');
       try {
         const res = await fetch(API_URL);
-        if (!res.ok) throw new Error('D1 fetch error');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${res.status}`);
+        }
         const data = await res.json();
         if (Array.isArray(data)) {
           bookings = data;
@@ -857,11 +858,13 @@
           showToast(`成功新增 ${newBookings.length} 筆預約並同步至 D1！`, "success");
           fetchBookingsFromD1();
         } else {
-          showToast("已存至本地！D1 連線失敗，請檢查設定", "info");
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error || `HTTP ${res.status}`;
+          showToast(`D1 同步失敗 (${errMsg})，已存至本地備份`, "error");
         }
       } catch (err) {
         console.error("D1 Write Error:", err);
-        showToast("已存至本地備份", "info");
+        showToast("網路連線失敗，已存至本地備份", "info");
       }
 
       document.getElementById('detailInput').value = '';
