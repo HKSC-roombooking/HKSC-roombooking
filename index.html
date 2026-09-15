@@ -816,43 +816,54 @@
       });
     }
 
-    function loadLocalBookings() {
-      try {
-        const saved = localStorage.getItem('hksc_bookings');
-        if (saved) bookings = JSON.parse(saved);
-      } catch (e) {
-        console.error("Local storage error:", e);
-      }
+    async function loadLocalBookings() {
+    try {
+        const res = await fetch('/api/bookings');
+        const result = await res.json();
+        if (result.success && result.data) {
+            bookings = result.data.map(item => ({
+                id: item.id,
+                date: item.booking_date,
+                room: item.room_number,
+                category: item.category,
+                startTime: item.start_time,
+                endTime: item.end_time,
+                notes: item.notes,
+                cancelled: item.status === '已取消'
+            }));
+            renderCalendar();
+        }
+    } catch (e) {
+        console.error("Load API error:", e);
     }
+}
 
-    function saveLocalBookings() {
-      try {
-        localStorage.setItem('hksc_bookings', JSON.stringify(bookings));
-      } catch (e) {
-        console.error("Local storage save error:", e);
-      }
+    async function saveLocalBookings(newBooking) {
+    try {
+        if (!newBooking) return;
+        const res = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                booking_date: newBooking.date,
+                room_number: newBooking.room,
+                category: newBooking.category,
+                start_time: newBooking.startTime,
+                end_time: newBooking.endTime,
+                notes: newBooking.notes,
+                status: '已確認'
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            await loadLocalBookings(); // 新增完成後重新從遠端載入最新清單
+        }
+    } catch (e) {
+        console.error("Save API error:", e);
     }
+}
 
-    function setupCloudSync() {
-      if (!db) return;
-      const badge = document.getElementById('cloudStatusBadge');
-      const badgeText = document.getElementById('cloudStatusText');
-      if (badge) badge.classList.remove('hidden');
-
-      try {
-        const colRef = collection(db, 'artifacts', appId, 'public_data');
-        onSnapshot(colRef, (snapshot) => {
-          const cloudData = [];
-          snapshot.forEach(docSnap => {
-            cloudData.push({ id: docSnap.id, ...docSnap.data() });
-          });
-          if (cloudData.length > 0) {
-            // 智能合併雲端與本地資料，避免寫入中途被 Snapshot 覆蓋沖掉
-            const cloudMap = new Map(cloudData.map(item => [item.id, item]));
-            bookings.forEach(b => {
-              if (!cloudMap.has(b.id)) {
-                cloudMap.set(b.id, b);
-              }
+   
             });
             bookings = Array.from(cloudMap.values());
             saveLocalBookings();
