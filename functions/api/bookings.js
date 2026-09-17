@@ -133,9 +133,9 @@ export async function onRequestDelete(context) {
       });
     }
 
-    await env.DB.prepare("DELETE FROM bookings WHERE id = ?").bind(id).run();
+    const result = await env.DB.prepare("DELETE FROM bookings WHERE id = ?").bind(id).run();
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, changes: result.meta ? result.meta.changes : 1 }), {
       headers: corsHeaders
     });
   } catch (err) {
