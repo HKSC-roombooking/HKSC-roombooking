@@ -66,7 +66,7 @@
           <span id="cloudStatusText">檢查 D1 連線中...</span>
         </div>
 
-        <!-- Export CSV Button (Triggers Filter Modal) -->
+        <!-- Export CSV Button -->
         <button onclick="window.openExportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer">
           <i data-lucide="download" class="w-3.5 h-3.5"></i>
           <span>匯出 CSV</span>
@@ -259,6 +259,8 @@
         <button onclick="window.closeCancelRescheduleModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div id="modalBookingSummary" class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 text-slate-700 border border-slate-200"></div>
+      
+      <!-- Option A: Reschedule -->
       <div class="border border-blue-100 bg-blue-50/50 p-3 rounded-xl space-y-2">
         <div class="text-xs font-bold text-blue-800 flex items-center gap-1"><i data-lucide="calendar-days" class="w-4 h-4"></i> 選項 A：變更預約資料</div>
         <div class="grid grid-cols-2 gap-2 text-xs">
@@ -269,9 +271,20 @@
         </div>
         <button onclick="window.rescheduleBooking()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs cursor-pointer">確認變更預約</button>
       </div>
-      <div class="border border-red-100 bg-red-50/50 p-3 rounded-xl space-y-2">
-        <div class="text-xs font-bold text-red-800 flex items-center gap-1"><i data-lucide="minus-circle" class="w-4 h-4"></i> 選項 B：確定取消預約</div>
-        <button onclick="window.confirmCancelBooking()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs cursor-pointer">確定取消預約</button>
+
+      <!-- Option B: Soft Cancel -->
+      <div class="border border-amber-100 bg-amber-50/50 p-3 rounded-xl space-y-2">
+        <div class="text-xs font-bold text-amber-800 flex items-center gap-1"><i data-lucide="minus-circle" class="w-4 h-4"></i> 選項 B：取消預約（劃線保留紀錄 & 自動重算堂數）</div>
+        <button onclick="window.confirmCancelBooking()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-xs cursor-pointer">確定取消預約</button>
+      </div>
+
+      <!-- Option C: Admin Hard Delete -->
+      <div class="border border-red-200 bg-red-50/60 p-3 rounded-xl space-y-2">
+        <div class="text-xs font-bold text-red-800 flex items-center gap-1"><i data-lucide="trash-2" class="w-4 h-4"></i> 選項 C：Admin 徹底刪除（不留痕跡）</div>
+        <div class="flex gap-2">
+          <input type="password" id="adminCodeInput" placeholder="輸入 Admin 密碼" class="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-red-500">
+          <button onclick="window.confirmAdminHardDelete()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-xs cursor-pointer whitespace-nowrap">徹底刪除</button>
+        </div>
       </div>
     </div>
   </div>
@@ -330,6 +343,23 @@
     </div>
   </div>
 
+  <!-- MODAL 5: Booking Confirmation Modal (New Requirement) -->
+  <div id="bookingConfirmModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="check-square" class="w-5 h-5 text-blue-600"></i> 請確認預約資料
+        </h3>
+        <button onclick="window.closeBookingConfirmModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="bookingConfirmSummary" class="p-3 bg-slate-50 rounded-xl text-xs space-y-1.5 text-slate-700 border border-slate-200 max-h-60 overflow-y-auto"></div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="window.closeBookingConfirmModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs cursor-pointer">返回修改</button>
+        <button onclick="window.commitNewBookings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-blue-600/20 cursor-pointer">確認提交預約</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
   <!-- Application Script -->
@@ -341,8 +371,10 @@
     let selectedFilterRoom = 'Rm 21';
     let targetBookingId = null;
     let isUnlocked = false;
+    let pendingNewBookings = []; // 暫存等待彈窗確認的新預約列表
 
     const API_URL = '/api/bookings';
+    const ROOM_ORDER = ['Rm 21', 'Rm 22', 'Rm 23', 'Rm 31', 'Rm 32', 'Rm 41', 'Rm 42'];
 
     window.addEventListener('DOMContentLoaded', () => {
       populateTimeSelects();
@@ -363,10 +395,7 @@
       lockUI();
       loadLocalBookings();
 
-      // 立即與 Cloudflare D1 進行第一次同步
       fetchBookingsFromD1();
-
-      // 每 3 秒強制拉取 D1 最新數據 (防快取 URL)
       setInterval(fetchBookingsFromD1, 3000);
       window.addEventListener('focus', fetchBookingsFromD1);
 
@@ -464,14 +493,12 @@
       return h * 60 + m;
     }
 
-    // 核心 D1 同步邏輯 (附帶 Cache Buster 與即時狀態診斷)
     async function fetchBookingsFromD1() {
       const badgeText = document.getElementById('cloudStatusText');
       const badgeContainer = document.getElementById('cloudStatusBadge');
       const badgeDot = document.getElementById('cloudStatusDot');
 
       try {
-        // 加上 ?_t= 時間戳記強迫不使用瀏覽器 HTTP 快取
         const res = await fetch(`${API_URL}?_t=${Date.now()}`);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
@@ -581,7 +608,8 @@
       });
     }
 
-    window.handleFormSubmit = async function(e) {
+    // 新增預約：先驗證衝突，然後跳出 Pop-up 確認視窗
+    window.handleFormSubmit = function(e) {
       e.preventDefault();
       if (!isUnlocked) { lockUI(); return; }
 
@@ -630,16 +658,46 @@
       }
 
       const totalSessions = targetDates.length;
-      const newBookings = targetDates.map((date, i) => ({
+      const createdTimestamp = new Date().toISOString();
+
+      pendingNewBookings = targetDates.map((date, i) => ({
         id: 'b_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5),
         room, category, detail, date, startTime, endTime,
         sessionIndex: i + 1, totalSessions, status: 'active',
-        createdAt: new Date().toISOString()
+        createdAt: createdTimestamp
       }));
 
+      // 生成 Pop-up 視窗內容
+      const summaryHTML = `
+        <div><strong>房間號碼：</strong> ${room}</div>
+        <div><strong>分類/備註：</strong> ${category} ${detail ? `(${detail})` : ''}</div>
+        <div><strong>日期範圍：</strong> ${startDate} 至 ${endDate}</div>
+        <div><strong>預約時段：</strong> ${startTime} - ${endTime}</div>
+        <div><strong>預約總堂數：</strong> 共 ${totalSessions} 堂</div>
+        <div class="mt-2 pt-2 border-t border-slate-200 text-[11px] text-slate-500 font-mono">
+          <strong>詳細日期清單：</strong><br>
+          ${targetDates.map((d, idx) => `第 ${idx+1} 堂: ${d}`).join('<br>')}
+        </div>
+      `;
+      document.getElementById('bookingConfirmSummary').innerHTML = summaryHTML;
+      document.getElementById('bookingConfirmModal').classList.remove('hidden');
+    };
+
+    window.closeBookingConfirmModal = function() {
+      document.getElementById('bookingConfirmModal').classList.add('hidden');
+      pendingNewBookings = [];
+    };
+
+    // 使用者在 Pop-up 按下「確認提交」
+    window.commitNewBookings = async function() {
+      if (pendingNewBookings.length === 0) return;
+
+      const newBookings = [...pendingNewBookings];
       bookings.push(...newBookings);
       saveLocalBookings();
       renderCalendar();
+
+      closeBookingConfirmModal();
 
       try {
         const res = await fetch(API_URL, {
@@ -662,6 +720,36 @@
       document.getElementById('detailInput').value = '';
     };
 
+    // 重算同批次（相同 createdAt）剩餘有效預約的堂數
+    async function recalculateSeriesSessions(createdAtKey) {
+      if (!createdAtKey) return;
+
+      // 找出所有同一批次且未被刪除/取消的預約
+      const seriesActive = bookings.filter(b => b.createdAt === createdAtKey && b.status !== 'cancelled');
+      seriesActive.sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+      const newTotal = seriesActive.length;
+      const updatePromises = [];
+
+      seriesActive.forEach((item, idx) => {
+        item.sessionIndex = idx + 1;
+        item.totalSessions = newTotal;
+
+        // 同步更新至 D1
+        updatePromises.push(
+          fetch(API_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          }).catch(e => console.error(e))
+        );
+      });
+
+      saveLocalBookings();
+      renderCalendar();
+      await Promise.all(updatePromises);
+    }
+
     window.openCancelModal = function(bookingId) {
       if (!isUnlocked) { lockUI(); return; }
       targetBookingId = bookingId;
@@ -681,6 +769,7 @@
       document.getElementById('rescheduleRoom').value = booking.room;
       document.getElementById('rescheduleStartTime').value = booking.startTime;
       document.getElementById('rescheduleEndTime').value = booking.endTime;
+      document.getElementById('adminCodeInput').value = '';
       document.getElementById('cancelRescheduleModal').classList.remove('hidden');
     };
 
@@ -733,12 +822,15 @@
       closeCancelRescheduleModal();
     };
 
+    // 選項 B: 劃線取消預約 (並自動重新計算剩餘堂數)
     window.confirmCancelBooking = async function() {
       if (!targetBookingId) return;
       const booking = bookings.find(b => b.id === targetBookingId);
       if (!booking) return;
 
+      const createdAtKey = booking.createdAt;
       booking.status = 'cancelled';
+
       saveLocalBookings();
       renderCalendar();
 
@@ -749,8 +841,43 @@
           body: JSON.stringify(booking)
         });
         if (res.ok) {
-          showToast("已取消該預約（記錄劃線保留並同步至 D1）", "info");
+          showToast("已取消該預約（記錄劃線保留）", "info");
+          await recalculateSeriesSessions(createdAtKey);
           fetchBookingsFromD1();
+        }
+      } catch (err) { console.error(err); }
+
+      closeCancelRescheduleModal();
+    };
+
+    // 選項 C: Admin 專用徹底刪除 (不留痕跡 & 重算堂數)
+    window.confirmAdminHardDelete = async function() {
+      const codeInput = document.getElementById('adminCodeInput');
+      if (!codeInput || codeInput.value.trim() !== 'Admin') {
+        showToast("Admin 密碼錯誤，無法刪除！", "error");
+        return;
+      }
+
+      if (!targetBookingId) return;
+      const booking = bookings.find(b => b.id === targetBookingId);
+      if (!booking) return;
+
+      const createdAtKey = booking.createdAt;
+      const targetId = booking.id;
+
+      // 本地陣列移除
+      bookings = bookings.filter(b => b.id !== targetId);
+      saveLocalBookings();
+      renderCalendar();
+
+      try {
+        const res = await fetch(`${API_URL}?id=${targetId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast("已徹底刪除該預約記錄（不留痕跡）", "success");
+          await recalculateSeriesSessions(createdAtKey);
+          fetchBookingsFromD1();
+        } else {
+          showToast("刪除失敗", "error");
         }
       } catch (err) { console.error(err); }
 
@@ -791,7 +918,14 @@
         return;
       }
 
-      filtered.sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      // 匯出時一併依據房間號碼與時間排序
+      filtered.sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        const roomA = ROOM_ORDER.indexOf(a.room);
+        const roomB = ROOM_ORDER.indexOf(b.room);
+        if (roomA !== roomB) return roomA - roomB;
+        return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+      });
 
       let csvStr = "\uFEFF日期,房間號碼,分類,堂數,開始時間,結束時間,狀態,詳細備註\n";
       filtered.forEach(b => {
@@ -813,6 +947,18 @@
       closeExportModal();
       showToast(`成功匯出 ${filtered.length} 筆記錄！`, "success");
     };
+
+    // 核心卡片排序邏輯 (依據 ROOM_ORDER，次要按開始時間)
+    function sortBookingItems(list) {
+      return list.sort((a, b) => {
+        const roomA = ROOM_ORDER.indexOf(a.room);
+        const roomB = ROOM_ORDER.indexOf(b.room);
+        if (roomA !== roomB) {
+          return roomA - roomB;
+        }
+        return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+      });
+    }
 
     function renderCalendar() {
       const grid = document.getElementById('calendarGrid');
@@ -863,8 +1009,9 @@
         const daytimeBookings = dayBookings.filter(b => timeToMinutes(b.startTime) < nightCutoff);
         const nighttimeBookings = dayBookings.filter(b => timeToMinutes(b.startTime) >= nightCutoff);
 
-        daytimeBookings.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-        nighttimeBookings.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+        // 進行排序（房間號碼 ➔ 開始時間）
+        sortBookingItems(daytimeBookings);
+        sortBookingItems(nighttimeBookings);
 
         if (daytimeBookings.length > 0) {
           const daySection = document.createElement('div');
