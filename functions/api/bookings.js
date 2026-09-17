@@ -1,7 +1,7 @@
 // 通用 CORS 與 禁用快取 標頭設定
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json;charset=UTF-8",
   "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
@@ -97,9 +97,43 @@ export async function onRequestPut(context) {
     const b = await request.json();
     await env.DB.prepare(`
       UPDATE bookings 
-      SET room = ?, category = ?, detail = ?, date = ?, startTime = ?, endTime = ?, status = ?
+      SET room = ?, category = ?, detail = ?, date = ?, startTime = ?, endTime = ?, sessionIndex = ?, totalSessions = ?, status = ?
       WHERE id = ?
-    `).bind(b.room, b.category, b.detail || '', b.date, b.startTime, b.endTime, b.status, b.id).run();
+    `).bind(b.room, b.category, b.detail || '', b.date, b.startTime, b.endTime, b.sessionIndex || 1, b.totalSessions || 1, b.status, b.id).run();
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: corsHeaders
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: corsHeaders
+    });
+  }
+}
+
+// Admin 專用：徹底刪除預約記錄 (DELETE)
+export async function onRequestDelete(context) {
+  const { request, env } = context;
+  try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: "Cloudflare D1 綁定變數名稱不符合 (未設定 'DB')" }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: "缺少預約識別碼 (id)" }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+
+    await env.DB.prepare("DELETE FROM bookings WHERE id = ?").bind(id).run();
 
     return new Response(JSON.stringify({ success: true }), {
       headers: corsHeaders
