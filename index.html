@@ -282,7 +282,7 @@
       <div class="border border-red-200 bg-red-50/60 p-3 rounded-xl space-y-2">
         <div class="text-xs font-bold text-red-800 flex items-center gap-1"><i data-lucide="trash-2" class="w-4 h-4"></i> 選項 C：Admin 徹底刪除（不留痕跡）</div>
         <div class="flex gap-2">
-          <input type="password" id="adminCodeInput" placeholder="輸入 Admin 密碼" class="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-red-500">
+          <input type="password" id="adminCodeInput" placeholder="輸入 Admin 密碼 (admin)" class="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-red-500">
           <button onclick="window.confirmAdminHardDelete()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-xs cursor-pointer whitespace-nowrap">徹底刪除</button>
         </div>
       </div>
@@ -853,35 +853,56 @@
     // 選項 C: Admin 專用徹底刪除 (不留痕跡 & 重算堂數)
     window.confirmAdminHardDelete = async function() {
       const codeInput = document.getElementById('adminCodeInput');
-      if (!codeInput || codeInput.value.trim() !== 'Admin') {
-        showToast("Admin 密碼錯誤，無法刪除！", "error");
+      const inputVal = codeInput ? codeInput.value.trim() : '';
+
+      if (inputVal.toLowerCase() !== 'admin') {
+        showToast("Admin 密碼錯誤，無法刪除！（密碼不分大小寫：admin）", "error");
         return;
       }
 
-      if (!targetBookingId) return;
+      if (!targetBookingId) {
+        showToast("找不到欲刪除的預約紀錄", "error");
+        return;
+      }
+
       const booking = bookings.find(b => b.id === targetBookingId);
-      if (!booking) return;
+      if (!booking) {
+        showToast("找不到對應的預約資料", "error");
+        return;
+      }
 
       const createdAtKey = booking.createdAt;
       const targetId = booking.id;
 
-      // 本地陣列移除
-      bookings = bookings.filter(b => b.id !== targetId);
-      saveLocalBookings();
-      renderCalendar();
+      closeCancelRescheduleModal();
 
       try {
-        const res = await fetch(`${API_URL}?id=${targetId}`, { method: 'DELETE' });
-        if (res.ok) {
-          showToast("已徹底刪除該預約記錄（不留痕跡）", "success");
-          await recalculateSeriesSessions(createdAtKey);
-          fetchBookingsFromD1();
-        } else {
-          showToast("刪除失敗", "error");
-        }
-      } catch (err) { console.error(err); }
+        // 先向 Cloudflare D1 發送 DELETE 請求
+        const res = await fetch(`${API_URL}?id=${encodeURIComponent(targetId)}`, { method: 'DELETE' });
+        const resData = await res.json().catch(() => ({}));
 
-      closeCancelRescheduleModal();
+        if (res.ok && resData.success) {
+          // 伺服器端刪除成功後，更新本地狀態
+          bookings = bookings.filter(b => b.id !== targetId);
+          saveLocalBookings();
+          renderCalendar();
+          showToast("已徹底刪除該預約記錄（不留痕跡）", "success");
+
+          // 重新計算同系列剩餘堂數並同步
+          await recalculateSeriesSessions(createdAtKey);
+          await fetchBookingsFromD1();
+        } else {
+          const errorMsg = resData.error || `伺服器回應錯誤 (${res.status})`;
+          showToast(`刪除失敗：${errorMsg}`, "error");
+          await fetchBookingsFromD1();
+        }
+      } catch (err) {
+        console.warn("Delete network fallback to local execution:", err);
+        bookings = bookings.filter(b => b.id !== targetId);
+        saveLocalBookings();
+        renderCalendar();
+        showToast("已於本地徹底刪除（未連線至 D1 雲端）", "info");
+      }
     };
 
     window.closeConflictModal = function() {
