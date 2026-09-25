@@ -1,4 +1,3 @@
-// 通用 CORS 與 禁用快取 標頭設定
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -12,7 +11,6 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: corsHeaders });
 }
 
-// Cloudflare Pages Function - 讀取 Cloudflare D1 SQL 資料庫
 export async function onRequestGet(context) {
   const { env } = context;
   try {
@@ -24,7 +22,7 @@ export async function onRequestGet(context) {
     }
 
     const { results } = await env.DB.prepare(
-      "SELECT id, room, category, detail, date, startTime, endTime, sessionIndex, totalSessions, status, createdAt FROM bookings ORDER BY date ASC, startTime ASC"
+      "SELECT id, room, category, detail, date, startTime, endTime, sessionIndex, totalSessions, status, createdAt, isConfirmed FROM bookings ORDER BY date ASC, startTime ASC"
     ).all();
 
     return new Response(JSON.stringify(results || []), {
@@ -38,7 +36,6 @@ export async function onRequestGet(context) {
   }
 }
 
-// 新增預約記錄
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
@@ -52,9 +49,10 @@ export async function onRequestPost(context) {
     const items = await request.json();
     const records = Array.isArray(items) ? items : [items];
 
+    // ✅ 安全防護：使用 INSERT OR IGNORE 代替 REPLACE，防止主鍵重複時覆寫既有紀錄
     const stmt = env.DB.prepare(`
-      INSERT OR REPLACE INTO bookings (id, room, category, detail, date, startTime, endTime, sessionIndex, totalSessions, status, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO bookings (id, room, category, detail, date, startTime, endTime, sessionIndex, totalSessions, status, createdAt, isConfirmed)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const batch = records.map(b => stmt.bind(
@@ -68,7 +66,8 @@ export async function onRequestPost(context) {
       b.sessionIndex || 1,
       b.totalSessions || 1,
       b.status || 'active',
-      b.createdAt || new Date().toISOString()
+      b.createdAt || new Date().toISOString(),
+      (b.isConfirmed === true || b.isConfirmed === 1 || b.isConfirmed === '1' || b.isConfirmed === 'true') ? 1 : 0
     ));
 
     await env.DB.batch(batch);
@@ -83,7 +82,6 @@ export async function onRequestPost(context) {
   }
 }
 
-// 修改 / 取消預約記錄
 export async function onRequestPut(context) {
   const { request, env } = context;
   try {
@@ -95,11 +93,14 @@ export async function onRequestPut(context) {
     }
 
     const b = await request.json();
+    const isConf = (b.isConfirmed === true || b.isConfirmed === 1 || b.isConfirmed === '1' || b.isConfirmed === 'true') ? 1 : 0;
+
+    // ✅ 安全防護：僅針對必要變動欄位更新，確保主鍵與核心鍵值 (ID) 絕對不受影響
     await env.DB.prepare(`
       UPDATE bookings 
-      SET room = ?, category = ?, detail = ?, date = ?, startTime = ?, endTime = ?, sessionIndex = ?, totalSessions = ?, status = ?
+      SET room = ?, category = ?, detail = ?, date = ?, startTime = ?, endTime = ?, sessionIndex = ?, totalSessions = ?, status = ?, isConfirmed = ?
       WHERE id = ?
-    `).bind(b.room, b.category, b.detail || '', b.date, b.startTime, b.endTime, b.sessionIndex || 1, b.totalSessions || 1, b.status, b.id).run();
+    `).bind(b.room, b.category, b.detail || '', b.date, b.startTime, b.endTime, b.sessionIndex || 1, b.totalSessions || 1, b.status, isConf, b.id).run();
 
     return new Response(JSON.stringify({ success: true }), {
       headers: corsHeaders
@@ -112,7 +113,6 @@ export async function onRequestPut(context) {
   }
 }
 
-// Admin 專用：徹底刪除預約記錄 (DELETE)
 export async function onRequestDelete(context) {
   const { request, env } = context;
   try {
